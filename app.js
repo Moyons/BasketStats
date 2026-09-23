@@ -40,6 +40,118 @@
   let DB = loadDB();
 
   /* ---------------------------------------------------------
+     Admin mode (contraseña de administrador)
+     Cualquiera puede consultar; solo quien desbloquea con la
+     contraseña puede crear/editar/borrar datos. Es una barrera
+     de cara, no criptografía de verdad (todo vive en el cliente),
+     pero evita que alguien toque los datos por error o sin permiso.
+     --------------------------------------------------------- */
+  const UNLOCK_KEY = "basketstats_unlocked_v1";
+
+  function toHex(buffer) {
+    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+  function randomSaltHex() {
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return toHex(arr.buffer);
+  }
+  async function hashPassword(password, saltHex) {
+    const data = new TextEncoder().encode(saltHex + ":" + password);
+    const digest = await crypto.subtle.digest("SHA-256", data);
+    return toHex(digest);
+  }
+  function isAdminConfigured() { return !!(DB.admin && DB.admin.hash); }
+  function isUnlocked() { return !isAdminConfigured() || localStorage.getItem(UNLOCK_KEY) === "1"; }
+  function unlockAdmin() { localStorage.setItem(UNLOCK_KEY, "1"); }
+  function lockAdmin() { localStorage.removeItem(UNLOCK_KEY); }
+  async function checkPassword(pass) {
+    if (!isAdminConfigured()) return true;
+    return (await hashPassword(pass || "", DB.admin.salt)) === DB.admin.hash;
+  }
+  async function setAdminPassword(newPass) {
+    const salt = randomSaltHex();
+    const hash = await hashPassword(newPass, salt);
+    DB.admin = { salt, hash };
+  }
+
+  // Ejecuta `action` si ya está desbloqueado; si no, pide la contraseña primero.
+  function requireAdmin(action) {
+    if (isUnlocked()) { action(); return; }
+    openUnlockPrompt(action);
+  }
+
+  function openUnlockPrompt(onSuccess) {
+    openCenter(`
+      <h3 class="modal-title">Acceso de administrador</h3>
+      <p class="hint" style="margin-bottom:14px">Introduce la contraseña para añadir o modificar datos.</p>
+      <div class="field"><input type="password" id="unlock-pass" placeholder="Contraseña" autocomplete="current-password"></div>
+      <div id="unlock-err" class="hint" style="color:var(--critical);display:none;margin-bottom:6px">Contraseña incorrecta</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-block" id="unlock-cancel">Cancelar</button>
+        <button class="btn btn-primary btn-block" id="unlock-ok">Desbloquear</button>
+      </div>
+    `, {
+      onMount(root) {
+        const input = root.querySelector("#unlock-pass");
+        const err = root.querySelector("#unlock-err");
+        input.focus();
+        root.querySelector("#unlock-cancel").addEventListener("click", closeModal);
+        const tryUnlock = async () => {
+          const ok = await checkPassword(input.value);
+          if (ok) {
+            unlockAdmin();
+            closeModal();
+            renderAdminBadge();
+            onSuccess();
+          } else {
+            err.style.display = "block";
+            input.value = "";
+            input.focus();
+          }
+        };
+        root.querySelector("#unlock-ok").addEventListener("click", tryUnlock);
+        input.addEventListener("keydown", (e) => { if (e.key === "Enter") tryUnlock(); });
+      }
+    });
+  }
+
+  function promptText(title, desc, placeholder, onSubmit) {
+    openCenter(`
+      <h3 class="modal-title">${esc(title)}</h3>
+      ${desc ? `<p class="hint" style="margin-bottom:14px">${esc(desc)}</p>` : ""}
+      <div class="field"><input type="password" id="pt-input" placeholder="${esc(placeholder || "")}" autocomplete="current-password"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-block" id="pt-cancel">Cancelar</button>
+        <button class="btn btn-primary btn-block" id="pt-ok">Continuar</button>
+      </div>
+    `, {
+      onMount(root) {
+        const input = root.querySelector("#pt-input");
+        input.focus();
+        root.querySelector("#pt-cancel").addEventListener("click", closeModal);
+        const submit = () => { const v = input.value; closeModal(); onSubmit(v); };
+        root.querySelector("#pt-ok").addEventListener("click", submit);
+        input.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+      }
+    });
+  }
+
+  function renderAdminBadge() {
+    const btn = document.getElementById("admin-toggle");
+    if (!btn) return;
+    if (!isAdminConfigured()) { btn.style.display = "none"; return; }
+    btn.style.display = "flex";
+    if (isUnlocked()) {
+      btn.classList.add("unlocked");
+      btn.innerHTML = `<svg viewBox="0 0 24 24">${ICONS.unlock}</svg><span>Admin</span>`;
+    } else {
+      btn.classList.remove("unlocked");
+      btn.innerHTML = `<svg viewBox="0 0 24 24">${ICONS.lock}</svg><span>Solo lectura</span>`;
+    }
+  }
+
+  /* ---------------------------------------------------------
      Stat definitions
      --------------------------------------------------------- */
   // Shot types carry made/attempt; simple types are just counted.
@@ -166,6 +278,7 @@
     window.scrollTo(0, 0);
     m.handler(view, m.params);
     updateTabbar(path);
+    renderAdminBadge();
   }
 
   function updateTabbar(path) {
@@ -227,6 +340,8 @@
     down: '<path d="M6 9l6 6 6-6"/>',
     export: '<path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
     settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+    lock: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    unlock: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 7.6-1.8"/>',
   };
 
   /* ---------------------------------------------------------
@@ -304,7 +419,7 @@
         "Crea tu primer partido y empieza a registrar las estadísticas en vivo.",
         `<button class="btn btn-primary" id="new-game-btn-2">Nuevo partido</button>`
       )));
-      view.querySelector("#new-game-btn-2").addEventListener("click", openNewGameSheet);
+      view.querySelector("#new-game-btn-2").addEventListener("click", () => requireAdmin(openNewGameSheet));
     } else {
       if (live.length) {
         view.appendChild(el(`<div class="section-title">En juego</div>`));
@@ -320,7 +435,7 @@
       }
     }
 
-    view.querySelector("#new-game-btn").addEventListener("click", openNewGameSheet);
+    view.querySelector("#new-game-btn").addEventListener("click", () => requireAdmin(openNewGameSheet));
   });
 
   function gameCard(g) {
@@ -466,19 +581,19 @@
 
     if (!isFinal) {
       board.querySelectorAll(".rival-controls button").forEach(b => {
-        b.addEventListener("click", () => {
+        b.addEventListener("click", () => requireAdmin(() => {
           const d = parseInt(b.dataset.opp, 10);
           game.oppScore = Math.max(0, (game.oppScore || 0) + d);
           saveDB();
           renderView();
-        });
+        }));
       });
       board.querySelectorAll("#quarter-seg button").forEach(b => {
-        b.addEventListener("click", () => {
+        b.addEventListener("click", () => requireAdmin(() => {
           game.quarter = parseInt(b.dataset.q, 10);
           saveDB();
           renderView();
-        });
+        }));
       });
     }
 
@@ -503,14 +618,16 @@
     });
     view.appendChild(strip);
 
-    if (selected && !isFinal) {
+    if (selected && !isFinal && isUnlocked()) {
       renderStatPad(view, game, getPlayer(selected));
-    } else if (selected && isFinal) {
-      view.appendChild(el(`<p class="hint" style="margin-top:12px">Este partido ha finalizado. Reabre el partido desde el menú para seguir editando.</p>`));
-      renderEventLog(view, game, selected, false);
+    } else if (selected) {
+      const reason = isFinal
+        ? (isUnlocked() ? "Partido finalizado. Reabre el partido desde el menú para seguir editando." : "Partido finalizado.")
+        : "Modo solo lectura. Desbloquea el modo administrador para registrar estadísticas.";
+      renderReadOnlyPlayerStats(view, game, getPlayer(selected), reason);
     }
 
-    view.querySelector("#game-menu-btn").addEventListener("click", () => openGameMenu(game));
+    view.querySelector("#game-menu-btn").addEventListener("click", () => requireAdmin(() => openGameMenu(game)));
 
     function renderView() { location.hash = location.hash; render(); }
   }
@@ -594,6 +711,33 @@
     }
 
     renderEventLog(view, game, player.id, true);
+  }
+
+  function renderReadOnlyPlayerStats(view, game, player, reason) {
+    const events = playerEventsInGame(game, player.id);
+    const s = aggregate(events);
+
+    view.appendChild(el(`
+      <div class="statpad-head">
+        <div class="num">${esc(player.number ?? "")}</div>
+        <div>
+          <div class="name">${esc(player.name)}</div>
+          <div class="line">${s.pts} PTS · ${s.reb} REB · ${s.ast} AST · ${pctStr(s.fgm, s.fga)} TC</div>
+        </div>
+      </div>
+    `));
+    view.appendChild(el(`
+      <div class="stat-tiles">
+        ${statTile(s.pts, "PTS")}
+        ${statTile(s.reb, "REB")}
+        ${statTile(s.ast, "AST")}
+        ${statTile(s.stl, "ROB")}
+        ${statTile(s.blk, "TAP")}
+        ${statTile(s.tov, "PÉR")}
+      </div>
+    `));
+    view.appendChild(el(`<p class="hint" style="margin:14px 2px">${esc(reason)}</p>`));
+    renderEventLog(view, game, player.id, false);
   }
 
   function statAddedMsg(type, made) {
@@ -705,7 +849,7 @@
         "Añade a los jugadores de tu equipo para empezar a registrar partidos.",
         `<button class="btn btn-primary" id="add-player-btn-2">Añadir jugador</button>`
       )));
-      view.querySelector("#add-player-btn-2").addEventListener("click", () => openPlayerForm());
+      view.querySelector("#add-player-btn-2").addEventListener("click", () => requireAdmin(() => openPlayerForm()));
     } else {
       const card = el(`<div class="card"></div>`);
       const sorted = [...DB.players].sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
@@ -725,7 +869,7 @@
       view.appendChild(card);
     }
 
-    view.querySelector("#add-player-btn").addEventListener("click", () => openPlayerForm());
+    view.querySelector("#add-player-btn").addEventListener("click", () => requireAdmin(() => openPlayerForm()));
   });
 
   function openPlayerForm(existing) {
@@ -823,7 +967,7 @@
       view.appendChild(pointsTrendChart(perGame));
     }
 
-    view.querySelector("#edit-player-btn").addEventListener("click", () => openPlayerForm(player));
+    view.querySelector("#edit-player-btn").addEventListener("click", () => requireAdmin(() => openPlayerForm(player)));
   }
 
   function statTile(value, label) {
@@ -1042,11 +1186,56 @@
       </div>
     `);
     view.appendChild(card);
-    card.querySelector("#team-name").addEventListener("change", (e) => {
-      DB.team.name = e.target.value.trim() || "Mi Equipo";
+    const teamNameInput = card.querySelector("#team-name");
+    teamNameInput.addEventListener("change", (e) => {
+      const newVal = e.target.value.trim() || "Mi Equipo";
+      if (!isUnlocked()) {
+        e.target.value = DB.team.name;
+        requireAdmin(() => { DB.team.name = newVal; saveDB(); render(); toast("Guardado"); });
+        return;
+      }
+      DB.team.name = newVal;
       saveDB();
       toast("Guardado");
     });
+
+    view.appendChild(el(`<div class="section-title">Seguridad</div>`));
+    const secCard = el(`<div class="card"></div>`);
+    if (!isAdminConfigured()) {
+      secCard.innerHTML = `
+        <p class="hint" style="margin-bottom:14px">Activa una contraseña de administrador para que solo tú puedas crear partidos, registrar estadísticas o editar la plantilla. Cualquiera que abra este enlace podrá seguir consultando todo, pero no modificar nada sin la contraseña.</p>
+        <div class="field"><label>Nueva contraseña</label><input type="password" id="sec-new1" autocomplete="new-password"></div>
+        <div class="field"><label>Confirmar contraseña</label><input type="password" id="sec-new2" autocomplete="new-password"></div>
+        <button class="btn btn-primary btn-block" id="sec-activate">Activar protección</button>
+      `;
+    } else {
+      secCard.innerHTML = `
+        <p class="hint" style="margin-bottom:14px">Protección activada. Este dispositivo está ${isUnlocked() ? "<b style='color:var(--good)'>desbloqueado (modo administrador)</b>" : "<b>en modo solo lectura</b>"}.</p>
+        ${isUnlocked() ? `<button class="btn btn-ghost btn-block" id="sec-lock" style="margin-bottom:10px">Bloquear este dispositivo</button>` : ""}
+        <button class="btn btn-ghost btn-block" id="sec-change" style="margin-bottom:10px">Cambiar contraseña</button>
+        <button class="btn btn-danger btn-block" id="sec-disable">Desactivar protección</button>
+      `;
+    }
+    view.appendChild(secCard);
+
+    secCard.querySelector("#sec-activate")?.addEventListener("click", async () => {
+      const n1 = secCard.querySelector("#sec-new1").value;
+      const n2 = secCard.querySelector("#sec-new2").value;
+      if (n1.length < 4) { toast("Mínimo 4 caracteres"); return; }
+      if (n1 !== n2) { toast("Las contraseñas no coinciden"); return; }
+      await setAdminPassword(n1);
+      unlockAdmin();
+      saveDB();
+      render();
+      toast("Protección activada");
+    });
+    secCard.querySelector("#sec-lock")?.addEventListener("click", () => {
+      lockAdmin();
+      render();
+      toast("Dispositivo bloqueado");
+    });
+    secCard.querySelector("#sec-change")?.addEventListener("click", () => openChangePasswordSheet());
+    secCard.querySelector("#sec-disable")?.addEventListener("click", () => openDisableProtectionFlow());
 
     view.appendChild(el(`<div class="section-title">Datos</div>`));
     const dataCard = el(`<div class="card"></div>`);
@@ -1069,7 +1258,7 @@
       toast("Copia exportada");
     });
 
-    importBtn.addEventListener("click", () => {
+    importBtn.addEventListener("click", () => requireAdmin(() => {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "application/json";
@@ -1095,24 +1284,93 @@
         reader.readAsText(file);
       });
       input.click();
-    });
+    }));
 
-    wipeBtn.addEventListener("click", () => {
+    wipeBtn.addEventListener("click", () => requireAdmin(() => {
       confirmDialog("Borrar todos los datos", "Se eliminarán todos los jugadores, partidos y estadísticas de forma permanente.", "Borrar todo", () => {
         DB = defaultDB();
         saveDB();
         go("/");
         toast("Datos borrados");
       }, true);
-    });
+    }));
 
     view.appendChild(el(`<div class="section-title">Acerca de</div>`));
     view.appendChild(el(`<div class="card hint">BasketStats guarda todos los datos en este dispositivo (sin necesidad de conexión ni cuenta). Usa "Exportar copia de seguridad" regularmente para no perder tus estadísticas.</div>`));
   });
 
+  function openChangePasswordSheet() {
+    openSheet(`
+      <h3 class="modal-title">Cambiar contraseña</h3>
+      <div class="field"><label>Contraseña actual</label><input type="password" id="cp-cur" autocomplete="current-password"></div>
+      <div class="field"><label>Nueva contraseña</label><input type="password" id="cp-new1" autocomplete="new-password"></div>
+      <div class="field"><label>Confirmar nueva contraseña</label><input type="password" id="cp-new2" autocomplete="new-password"></div>
+      <div id="cp-err" class="hint" style="color:var(--critical);display:none;margin-bottom:8px"></div>
+      <button class="btn btn-primary btn-block" id="cp-save">Guardar</button>
+    `, {
+      onMount(root) {
+        root.querySelector("#cp-cur").focus();
+        root.querySelector("#cp-save").addEventListener("click", async () => {
+          const cur = root.querySelector("#cp-cur").value;
+          const n1 = root.querySelector("#cp-new1").value;
+          const n2 = root.querySelector("#cp-new2").value;
+          const err = root.querySelector("#cp-err");
+          const ok = await checkPassword(cur);
+          if (!ok || n1.length < 4 || n1 !== n2) {
+            err.textContent = !ok ? "La contraseña actual no es correcta" : (n1.length < 4 ? "La nueva contraseña debe tener al menos 4 caracteres" : "Las contraseñas nuevas no coinciden");
+            err.style.display = "block";
+            return;
+          }
+          await setAdminPassword(n1);
+          saveDB();
+          closeModal();
+          toast("Contraseña actualizada");
+        });
+      }
+    });
+  }
+
+  function openDisableProtectionFlow() {
+    openSheet(`
+      <h3 class="modal-title">Desactivar protección</h3>
+      <p class="hint" style="margin-bottom:14px">Cualquiera con el enlace podrá añadir y modificar datos. Confirma tu contraseña para continuar.</p>
+      <div class="field"><input type="password" id="dp-cur" placeholder="Contraseña actual" autocomplete="current-password"></div>
+      <div id="dp-err" class="hint" style="color:var(--critical);display:none;margin-bottom:8px">Contraseña incorrecta</div>
+      <button class="btn btn-danger btn-block" id="dp-save">Desactivar protección</button>
+    `, {
+      onMount(root) {
+        root.querySelector("#dp-cur").focus();
+        root.querySelector("#dp-save").addEventListener("click", async () => {
+          const cur = root.querySelector("#dp-cur").value;
+          const ok = await checkPassword(cur);
+          const err = root.querySelector("#dp-err");
+          if (!ok) { err.style.display = "block"; return; }
+          DB.admin = undefined;
+          saveDB();
+          closeModal();
+          render();
+          toast("Protección desactivada");
+        });
+      }
+    });
+  }
+
   /* ---------------------------------------------------------
      Init
      --------------------------------------------------------- */
+  const adminToggleBtn = document.getElementById("admin-toggle");
+  adminToggleBtn.addEventListener("click", () => {
+    if (isUnlocked() && isAdminConfigured()) {
+      confirmDialog("Bloquear modo administrador", "Este dispositivo volverá a modo solo lectura.", "Bloquear", () => {
+        lockAdmin();
+        renderAdminBadge();
+        render();
+      });
+    } else if (!isUnlocked()) {
+      openUnlockPrompt(() => render());
+    }
+  });
+
   render();
 
   // Register service worker for installable/offline PWA (best-effort).
