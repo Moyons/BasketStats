@@ -657,39 +657,48 @@
       </div>
     `));
 
-    const board = el(`
-      <div class="scoreboard">
-        <div class="scoreboard-teams">
-          <div class="scoreboard-team us">
-            <div class="name">${esc(DB.team.name)}</div>
-            <div class="score tabular">${us}</div>
-          </div>
-          <div class="scoreboard-mid">${isFinal ? "FINAL" : "Q" + (game.quarter || 1)}</div>
-          <div class="scoreboard-team">
-            <div class="name">${esc(game.opponent)}</div>
-            <div class="score tabular">${them}</div>
-          </div>
+    // Cabecera fija (marcador compacto + selector de jugador): se queda
+    // pegada arriba al hacer scroll para que nunca haga falta buscarla.
+    const sticky = el(`
+      <div class="live-sticky">
+        <div class="mini-score">
+          <span class="mini-us tabular">${us}</span>
+          <span class="mini-sep">–</span>
+          <span class="mini-them tabular">${them}</span>
+          <span class="mini-vs">${esc(game.opponent)}</span>
+          <span class="mini-q">${isFinal ? "FINAL" : "Q" + (game.quarter || 1)}</span>
+          ${!isFinal ? `<button type="button" class="mini-expand" id="score-expand-btn">Marcador y periodo <svg viewBox="0 0 24 24">${ICONS.down}</svg></button>` : ""}
         </div>
         ${!isFinal ? `
-        <div class="rival-controls">
-          <button data-opp="-1">−1</button>
-          <button data-opp="1">Rival +1</button>
-          <button data-opp="2">Rival +2</button>
-          <button data-opp="3">Rival +3</button>
-        </div>
-        <div class="quarter-row">
-          <span class="hint">Periodo</span>
-          <div class="seg" style="width:auto" id="quarter-seg">
-            ${[1,2,3,4].map(q => `<button type="button" data-q="${q}" class="${(game.quarter||1)===q?'active':''}">Q${q}</button>`).join("")}
-            <button type="button" data-q="5" class="${(game.quarter||1)===5?'active':''}">PR</button>
+        <div class="rival-quarter-panel" id="rival-quarter-panel" hidden>
+          <div class="rival-controls">
+            <button data-opp="-1">−1</button>
+            <button data-opp="1">Rival +1</button>
+            <button data-opp="2">Rival +2</button>
+            <button data-opp="3">Rival +3</button>
+          </div>
+          <div class="quarter-row">
+            <span class="hint">Periodo</span>
+            <div class="seg" style="width:auto" id="quarter-seg">
+              ${[1,2,3,4].map(q => `<button type="button" data-q="${q}" class="${(game.quarter||1)===q?'active':''}">Q${q}</button>`).join("")}
+              <button type="button" data-q="5" class="${(game.quarter||1)===5?'active':''}">PR</button>
+            </div>
           </div>
         </div>` : ""}
+        <div class="player-strip" id="player-strip"></div>
       </div>
     `);
-    view.appendChild(board);
+    view.appendChild(sticky);
 
     if (!isFinal) {
-      board.querySelectorAll(".rival-controls button").forEach(b => {
+      sticky.querySelector("#score-expand-btn").addEventListener("click", () => {
+        const panel = sticky.querySelector("#rival-quarter-panel");
+        const btn = sticky.querySelector("#score-expand-btn");
+        const willShow = panel.hasAttribute("hidden");
+        if (willShow) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", "");
+        btn.classList.toggle("open", willShow);
+      });
+      sticky.querySelectorAll(".rival-controls button").forEach(b => {
         b.addEventListener("click", () => requireAdmin(() => {
           const d = parseInt(b.dataset.opp, 10);
           game.oppScore = Math.max(0, (game.oppScore || 0) + d);
@@ -697,7 +706,7 @@
           renderView();
         }));
       });
-      board.querySelectorAll("#quarter-seg button").forEach(b => {
+      sticky.querySelectorAll("#quarter-seg button").forEach(b => {
         b.addEventListener("click", () => requireAdmin(() => {
           game.quarter = parseInt(b.dataset.q, 10);
           saveDB();
@@ -706,8 +715,7 @@
       });
     }
 
-    view.appendChild(el(`<div class="section-title">Jugadores</div>`));
-    const strip = el(`<div class="player-strip"></div>`);
+    const strip = sticky.querySelector("#player-strip");
     const roster = activePlayers();
     const selected = liveSelectedPlayer[game.id];
     roster.forEach(p => {
@@ -725,15 +733,18 @@
       });
       strip.appendChild(chip);
     });
-    view.appendChild(strip);
 
-    if (selected && !isFinal && isUnlocked()) {
+    if (roster.length === 0) {
+      view.appendChild(el(`<p class="hint" style="margin-top:14px">Añade jugadores en la Plantilla para poder registrar estadísticas.</p>`));
+    } else if (selected && !isFinal && isUnlocked()) {
       renderStatPad(view, game, getPlayer(selected));
     } else if (selected) {
       const reason = isFinal
         ? (isUnlocked() ? "Partido finalizado. Reabre el partido desde el menú para seguir editando." : "Partido finalizado.")
         : "Modo solo lectura. Desbloquea el modo administrador para registrar estadísticas.";
       renderReadOnlyPlayerStats(view, game, getPlayer(selected), reason);
+    } else {
+      view.appendChild(el(`<p class="hint" style="margin-top:14px">Toca un jugador arriba para empezar a anotar.</p>`));
     }
 
     view.querySelector("#game-menu-btn").addEventListener("click", () => requireAdmin(() => openGameMenu(game)));
@@ -765,23 +776,23 @@
 
     const pad = el(`<div></div>`);
 
-    // Shots
+    // Tiro: botones grandes, agrupados por tipo (acierto/fallo en la misma fila).
     const shotGroup = el(`<div class="statgroup"><div class="statgroup-label">Tiro</div><div class="statgrid statgrid-2" id="shot-grid"></div></div>`);
     SHOT_TYPES.forEach(st => {
       const made = st.key === "ft" ? s.ftm : st.key === "p2" ? s.p2m : s.p3m;
       const att = st.key === "ft" ? s.fta : st.key === "p2" ? s.p2a : s.p3a;
-      const bMade = el(`<button class="statbtn made" data-type="${st.key}" data-made="1"><span class="lbl">${st.label} ✓</span><span class="cnt">${made}/${att}</span></button>`);
-      const bMiss = el(`<button class="statbtn miss" data-type="${st.key}" data-made="0"><span class="lbl">${st.label} ✗</span><span class="cnt">&nbsp;</span></button>`);
+      const bMade = el(`<button class="statbtn statbtn-lg made" data-type="${st.key}" data-made="1"><span class="lbl">${st.label} ✓</span><span class="cnt">${made}/${att}</span></button>`);
+      const bMiss = el(`<button class="statbtn statbtn-lg miss" data-type="${st.key}" data-made="0"><span class="lbl">${st.label} ✗</span><span class="cnt">&nbsp;</span></button>`);
       shotGroup.querySelector("#shot-grid").appendChild(bMade);
       shotGroup.querySelector("#shot-grid").appendChild(bMiss);
     });
     pad.appendChild(shotGroup);
 
-    // Simple stats
-    const simpleGroup = el(`<div class="statgroup"><div class="statgroup-label">Otras estadísticas</div><div class="statgrid" id="simple-grid"></div></div>`);
+    // Otras estadísticas: 2 columnas, botones grandes (fáciles de acertar sin mirar).
+    const simpleGroup = el(`<div class="statgroup"><div class="statgroup-label">Otras estadísticas</div><div class="statgrid statgrid-2" id="simple-grid"></div></div>`);
     SIMPLE_TYPES.forEach(t => {
       const count = s[t.key] !== undefined ? s[t.key] : events.filter(e => e.type === t.key).length;
-      const b = el(`<button class="statbtn" data-type="${t.key}"><span class="lbl">${t.label}</span><span class="cnt">${count}</span></button>`);
+      const b = el(`<button class="statbtn statbtn-lg" data-type="${t.key}"><span class="lbl">${t.label}</span><span class="cnt">${count}</span></button>`);
       simpleGroup.querySelector("#simple-grid").appendChild(b);
     });
     pad.appendChild(simpleGroup);
@@ -801,25 +812,27 @@
       });
     });
 
-    // Undo + log
+    // Registro del partido, colapsado por defecto para no distraer.
+    renderEventLog(view, game, player.id, true);
+
+    // Deshacer: botón flotante siempre a mano, sin tener que buscarlo.
     const lastEv = events[events.length - 1];
-    const undoRow = el(`
-      <div class="undo-row">
-        <div class="last">${lastEv ? "Último: " + describeEvent(lastEv) : "Sin acciones aún"}</div>
-        ${lastEv ? `<button class="undo-btn" id="undo-last"><svg viewBox="0 0 24 24">${ICONS.undo}</svg>Deshacer</button>` : ""}
-      </div>
-    `);
-    view.appendChild(undoRow);
     if (lastEv) {
-      undoRow.querySelector("#undo-last").addEventListener("click", () => {
+      const fab = el(`
+        <button class="undo-fab" id="undo-last" title="Deshacer: ${esc(describeEvent(lastEv))}">
+          <svg viewBox="0 0 24 24">${ICONS.undo}</svg>
+        </button>
+      `);
+      fab.addEventListener("click", () => {
         const idx = game.events.findIndex(e => e.id === lastEv.id);
         if (idx >= 0) game.events.splice(idx, 1);
         saveDB();
+        toast("Deshecho: " + describeEvent(lastEv));
+        if (navigator.vibrate) navigator.vibrate(8);
         location.hash = location.hash; render();
       });
+      view.appendChild(fab);
     }
-
-    renderEventLog(view, game, player.id, true);
   }
 
   function renderReadOnlyPlayerStats(view, game, player, reason) {
@@ -866,10 +879,25 @@
     return t ? t.label : ev.type;
   }
 
+  let liveLogOpen = {}; // "gameId:playerId" -> bool, colapsado por defecto
+
   function renderEventLog(view, game, playerId, editable) {
     const events = playerEventsInGame(game, playerId).slice().reverse();
     if (!events.length) return;
-    view.appendChild(el(`<div class="section-title">Registro del partido</div>`));
+    const logKey = game.id + ":" + playerId;
+    const isOpen = !!liveLogOpen[logKey];
+    const toggle = el(`
+      <button type="button" class="log-toggle" id="log-toggle-${logKey.replace(/[^a-z0-9]/gi, "")}">
+        <span>Registro del partido (${events.length})</span>
+        <svg viewBox="0 0 24 24" class="${isOpen ? "open" : ""}">${ICONS.down}</svg>
+      </button>
+    `);
+    view.appendChild(toggle);
+    toggle.addEventListener("click", () => {
+      liveLogOpen[logKey] = !isOpen;
+      location.hash = location.hash; render();
+    });
+    if (!isOpen) return;
     const log = el(`<div class="card event-log"></div>`);
     events.forEach(ev => {
       const isShot = ev.type === "ft" || ev.type === "p2" || ev.type === "p3";
