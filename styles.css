@@ -669,4 +669,20 @@ table.stats-table tbody tr:active { background: var(--surface-3); }
 .admin-toggle.unlocked { color: var(--accent-ink); background: linear-gradient(180deg, #ff8a35, var(--accent)); border-color: transparent; }
 .admin-toggle:active { transform: scale(0.96); }
 
+.cloud-badge {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 6px);
+  left: 16px;
+  z-index: 44;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.cloud-badge svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.cloud-badge.online { color: var(--good); }
+
 ::-webkit-scrollbar { width: 0; height: 0; }

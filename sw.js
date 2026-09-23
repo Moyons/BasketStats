@@ -1,4 +1,4 @@
-const CACHE = "basketstats-v1";
+const CACHE = "basketstats-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -21,6 +21,10 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  // Solo cacheamos los ficheros propios de la app (mismo origen). Las
+  // peticiones a Firebase (datos en vivo, streaming) deben ir siempre
+  // directas a la red, nunca servidas desde caché.
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     caches.match(e.request).then((cached) => {
       const fetchPromise = fetch(e.request)

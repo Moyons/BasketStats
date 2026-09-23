@@ -7,23 +7,46 @@
   "use strict";
 
   /* ---------------------------------------------------------
-     Storage
+     Storage — Firebase Realtime Database (compartida entre todos
+     los que abren el enlace) con localStorage como caché/respaldo
+     offline. Escritura abierta a nivel de base de datos: la única
+     protección es la contraseña de administrador de la propia app
+     (ver más abajo), igual que ya era antes de añadir la nube.
      --------------------------------------------------------- */
   const DB_KEY = "basketstats_v1";
+  const CLOUD_BASE = "https://basketstats-9e5e7-default-rtdb.europe-west1.firebasedatabase.app";
+  const CLOUD_PATH = "/data.json";
 
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
-  function loadDB() {
+  // Firebase Realtime Database no guarda arrays/objetos vacíos (los
+  // "recorta" al escribir), así que cualquier array vacío que mandemos
+  // (events: [], players: [], games: []) vuelve como `undefined` al
+  // leerlo. normalizeDB reconstruye esas listas para que el resto del
+  // código pueda asumir siempre que son arrays.
+  function asArray(v) {
+    if (Array.isArray(v)) return v;
+    if (v && typeof v === "object") return Object.values(v);
+    return [];
+  }
+  function normalizeDB(db) {
+    if (!db || typeof db !== "object") return defaultDB();
+    db.players = asArray(db.players);
+    db.games = asArray(db.games).map(g => {
+      g.events = asArray(g.events);
+      return g;
+    });
+    if (!db.team) db.team = { name: "Mi Equipo" };
+    return db;
+  }
+
+  function loadLocalDB() {
     try {
       const raw = localStorage.getItem(DB_KEY);
       if (!raw) return defaultDB();
-      const db = JSON.parse(raw);
-      if (!db.players) db.players = [];
-      if (!db.games) db.games = [];
-      if (!db.team) db.team = { name: "Mi Equipo" };
-      return db;
+      return normalizeDB(JSON.parse(raw));
     } catch (e) {
       return defaultDB();
     }
@@ -33,11 +56,95 @@
     return { team: { name: "Mi Equipo" }, players: [], games: [] };
   }
 
+  // Guarda local al instante (respuesta rápida) y sube a la nube en
+  // segundo plano para que el resto de dispositivos lo reciban.
   function saveDB() {
     localStorage.setItem(DB_KEY, JSON.stringify(DB));
+    cloudPut(DB);
   }
 
-  let DB = loadDB();
+  let DB = loadLocalDB();
+  let cloudConnected = false;
+
+  async function cloudPut(data) {
+    try {
+      const res = await fetch(CLOUD_BASE + CLOUD_PATH, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      setCloudConnected(res.ok);
+    } catch (e) {
+      setCloudConnected(false);
+    }
+  }
+
+  async function cloudFetchInitial() {
+    try {
+      const res = await fetch(CLOUD_BASE + CLOUD_PATH, { cache: "no-store" });
+      if (!res.ok) throw new Error("bad status");
+      return await res.json(); // null si la nube está vacía
+    } catch (e) {
+      return undefined; // undefined = no se pudo contactar (offline)
+    }
+  }
+
+  function setCloudConnected(v) {
+    cloudConnected = v;
+    renderCloudBadge();
+  }
+
+  function renderCloudBadge() {
+    const el2 = document.getElementById("cloud-badge");
+    if (!el2) return;
+    el2.classList.toggle("online", cloudConnected);
+    el2.innerHTML = cloudConnected
+      ? `<svg viewBox="0 0 24 24">${ICONS.cloud}</svg><span>En la nube</span>`
+      : `<svg viewBox="0 0 24 24">${ICONS.cloudOff}</svg><span>Sin conexión</span>`;
+  }
+
+  let cloudStream = null;
+  function startCloudStream() {
+    if (cloudStream) return;
+    try {
+      cloudStream = new EventSource(CLOUD_BASE + CLOUD_PATH);
+      cloudStream.addEventListener("put", (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload.path === "/" && payload.data) {
+            DB = normalizeDB(payload.data);
+            localStorage.setItem(DB_KEY, JSON.stringify(DB));
+            setCloudConnected(true);
+            render();
+          }
+        } catch (err) { /* ignora eventos que no podamos interpretar */ }
+      });
+      cloudStream.onopen = () => setCloudConnected(true);
+      cloudStream.onerror = () => setCloudConnected(false);
+    } catch (e) {
+      setCloudConnected(false);
+    }
+  }
+
+  async function initCloudSync(retryDelay) {
+    retryDelay = retryDelay || 3000;
+    const remote = await cloudFetchInitial();
+    if (remote === undefined) {
+      setCloudConnected(false);
+      setTimeout(() => initCloudSync(Math.min(retryDelay * 1.5, 30000)), retryDelay);
+      return;
+    }
+    if (remote === null) {
+      // La nube está vacía: la sembramos con lo que tengamos en local.
+      await cloudPut(DB);
+    } else {
+      DB = normalizeDB(remote);
+      localStorage.setItem(DB_KEY, JSON.stringify(DB));
+    }
+    setCloudConnected(true);
+    render();
+    startCloudStream();
+  }
 
   /* ---------------------------------------------------------
      Admin mode (contraseña de administrador)
@@ -342,6 +449,8 @@
     settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
     lock: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
     unlock: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 7.6-1.8"/>',
+    cloud: '<path d="M6.5 18a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 16.9 8.5 4.5 4.5 0 0 1 16.5 18h-10Z"/>',
+    cloudOff: '<path d="M6.5 18a4 4 0 0 1-.3-7.98M8.5 6.4A5.5 5.5 0 0 1 16.9 8.5 4.5 4.5 0 0 1 16.5 18h-7M3 3l18 18"/>',
   };
 
   /* ---------------------------------------------------------
@@ -1270,7 +1379,7 @@
           try {
             const data = JSON.parse(reader.result);
             if (!data.players || !data.games) throw new Error("Formato inválido");
-            confirmDialog("Importar copia", "Esto sustituirá todos los datos actuales por los del archivo. ¿Continuar?", "Importar", () => {
+            confirmDialog("Importar copia", "Esto sustituirá todos los datos actuales (los de todos los que usan este enlace) por los del archivo. ¿Continuar?", "Importar", () => {
               DB = data;
               if (!DB.team) DB.team = { name: "Mi Equipo" };
               saveDB();
@@ -1287,7 +1396,7 @@
     }));
 
     wipeBtn.addEventListener("click", () => requireAdmin(() => {
-      confirmDialog("Borrar todos los datos", "Se eliminarán todos los jugadores, partidos y estadísticas de forma permanente.", "Borrar todo", () => {
+      confirmDialog("Borrar todos los datos", "Se eliminarán todos los jugadores, partidos y estadísticas de forma permanente para todo el mundo que use este enlace.", "Borrar todo", () => {
         DB = defaultDB();
         saveDB();
         go("/");
@@ -1296,7 +1405,7 @@
     }));
 
     view.appendChild(el(`<div class="section-title">Acerca de</div>`));
-    view.appendChild(el(`<div class="card hint">BasketStats guarda todos los datos en este dispositivo (sin necesidad de conexión ni cuenta). Usa "Exportar copia de seguridad" regularmente para no perder tus estadísticas.</div>`));
+    view.appendChild(el(`<div class="card hint">Los partidos, jugadores y estadísticas se guardan en una base de datos compartida: todo el que abra este enlace ve los mismos datos en tiempo real. Si no hay conexión, la app sigue funcionando con la última copia guardada en este dispositivo y se sincroniza en cuanto vuelve la conexión. Usa "Exportar copia de seguridad" regularmente por si acaso.</div>`));
   });
 
   function openChangePasswordSheet() {
@@ -1372,6 +1481,7 @@
   });
 
   render();
+  initCloudSync();
 
   // Register service worker for installable/offline PWA (best-effort).
   if ("serviceWorker" in navigator) {
