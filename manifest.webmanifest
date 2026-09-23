@@ -1,0 +1,14 @@
+{
+  "name": "BasketStats",
+  "short_name": "BasketStats",
+  "description": "Estadísticas de baloncesto en directo para tu equipo",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d0f14",
+  "theme_color": "#0d0f14",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
