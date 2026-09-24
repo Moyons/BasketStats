@@ -128,6 +128,8 @@ a { color: inherit; text-decoration: none; }
 }
 .pagehead h1 { font-size: 30px; }
 .pagehead .sub { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
+.pagehead-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pagehead-left .iconbtn { flex-shrink: 0; }
 .iconbtn {
   width: 40px; height: 40px;
   border-radius: 12px;
@@ -323,6 +325,7 @@ a { color: inherit; text-decoration: none; }
   overflow-y: auto;
   animation: sheetup .22s cubic-bezier(.2,.8,.2,1);
 }
+.modal-sheet.tall { max-height: 94vh; }
 .modal-center {
   position: absolute;
   left: 50%; top: 50%;
@@ -336,6 +339,60 @@ a { color: inherit; text-decoration: none; }
 }
 @keyframes sheetup { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
 @keyframes popin { from { transform: translate(-50%,-50%) scale(.96); opacity: 0 } to { transform: translate(-50%,-50%) scale(1); opacity: 1 } }
+.picker-head {
+  position: sticky;
+  top: 0;
+  background: var(--surface-1);
+  z-index: 2;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 10px;
+}
+.picker-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+.picker-list { padding-bottom: 4px; }
+.picker-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.picker-row .num {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--surface-3); border: 1px solid var(--border-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-family: "Barlow Condensed", sans-serif; font-size: 15px;
+  flex-shrink: 0;
+}
+.picker-row .info { flex: 1; min-width: 0; }
+.picker-row .info .nm { font-weight: 700; font-size: 15px; }
+.picker-row .info .pos { font-size: 12px; color: var(--text-muted); }
+.picker-row .check {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.picker-row .check svg { width: 15px; height: 15px; stroke: var(--accent-ink); fill: none; stroke-width: 3; }
+.picker-row.checked .num { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
+.picker-row.checked .check { background: var(--accent); border-color: transparent; }
+.picker-row:active { background: var(--surface-2); }
+
+.roster-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 12px; margin-bottom: 8px;
+}
+.roster-edit-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 6px 12px 6px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.roster-edit-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+
 .sheet-handle {
   width: 36px; height: 4px;
   background: var(--border-strong);
@@ -442,16 +499,14 @@ a { color: inherit; text-decoration: none; }
 }
 
 .player-strip {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  gap: 7px;
+  max-height: 224px;
+  overflow-y: auto;
   padding-bottom: 2px;
-  scroll-snap-type: x proximity;
 }
 .player-chip {
-  flex: 0 0 auto;
-  scroll-snap-align: start;
-  width: 72px;
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
@@ -726,21 +781,5 @@ table.stats-table tbody tr:active { background: var(--surface-3); }
 .admin-toggle svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
 .admin-toggle.unlocked { color: var(--accent-ink); background: linear-gradient(180deg, #ff8a35, var(--accent)); border-color: transparent; }
 .admin-toggle:active { transform: scale(0.96); }
-
-.cloud-badge {
-  position: fixed;
-  top: calc(env(safe-area-inset-top) + 6px);
-  left: 16px;
-  z-index: 44;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  pointer-events: none;
-}
-.cloud-badge svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
-.cloud-badge.online { color: var(--good); }
 
 ::-webkit-scrollbar { width: 0; height: 0; }

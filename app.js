@@ -42,6 +42,34 @@
     return db;
   }
 
+  // Aplica los datos remotos MUTANDO los objetos existentes en vez de
+  // sustituir el árbol entero. Esto importa: partes de la app guardan
+  // una referencia directa a un partido o jugador concreto (p. ej. el
+  // selector de convocatoria, o el panel de estadísticas ya abierto) y
+  // si reemplazáramos `DB.games`/`DB.players` por arrays nuevos, esas
+  // referencias quedarían "huérfanas" — sus cambios ya no llegarían a
+  // guardarse. Mutar en el sitio mantiene esas referencias válidas.
+  function mergeInPlace(localArr, remoteArr) {
+    const remoteById = new Map(remoteArr.map(x => [x.id, x]));
+    for (let i = localArr.length - 1; i >= 0; i--) {
+      const id = localArr[i].id;
+      if (remoteById.has(id)) {
+        Object.assign(localArr[i], remoteById.get(id));
+        remoteById.delete(id);
+      } else {
+        localArr.splice(i, 1); // borrado en otro dispositivo
+      }
+    }
+    remoteArr.forEach(r => { if (remoteById.has(r.id)) localArr.push(r); });
+  }
+  function applyRemoteDB(remote) {
+    const clean = normalizeDB(remote);
+    mergeInPlace(DB.players, clean.players);
+    mergeInPlace(DB.games, clean.games);
+    DB.team = clean.team;
+    DB.admin = clean.admin;
+  }
+
   function loadLocalDB() {
     try {
       const raw = localStorage.getItem(DB_KEY);
@@ -89,18 +117,10 @@
     }
   }
 
+  // Estado de conexión a la nube (sin indicador visible: la app funciona
+  // igual con o sin conexión, con localStorage como respaldo automático).
   function setCloudConnected(v) {
     cloudConnected = v;
-    renderCloudBadge();
-  }
-
-  function renderCloudBadge() {
-    const el2 = document.getElementById("cloud-badge");
-    if (!el2) return;
-    el2.classList.toggle("online", cloudConnected);
-    el2.innerHTML = cloudConnected
-      ? `<svg viewBox="0 0 24 24">${ICONS.cloud}</svg><span>En la nube</span>`
-      : `<svg viewBox="0 0 24 24">${ICONS.cloudOff}</svg><span>Sin conexión</span>`;
   }
 
   let cloudStream = null;
@@ -112,7 +132,7 @@
         try {
           const payload = JSON.parse(e.data);
           if (payload.path === "/" && payload.data) {
-            DB = normalizeDB(payload.data);
+            applyRemoteDB(payload.data);
             localStorage.setItem(DB_KEY, JSON.stringify(DB));
             setCloudConnected(true);
             render();
@@ -138,7 +158,7 @@
       // La nube está vacía: la sembramos con lo que tengamos en local.
       await cloudPut(DB);
     } else {
-      DB = normalizeDB(remote);
+      applyRemoteDB(remote);
       localStorage.setItem(DB_KEY, JSON.stringify(DB));
     }
     setCloudConnected(true);
@@ -401,6 +421,10 @@
   window.addEventListener("hashchange", render);
 
   function go(path) { location.hash = path; }
+  function goBack(fallback) {
+    if (window.history.length > 1) window.history.back();
+    else go(fallback);
+  }
 
   /* ---------------------------------------------------------
      Small UI helpers
@@ -442,6 +466,7 @@
     trash: '<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/>',
     undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/>',
     chevron: '<path d="M9 6l6 6-6 6"/>',
+    back: '<path d="M19 12H5M11 5l-6 7 6 7"/>',
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
     check: '<path d="M5 13l4 4L19 7"/>',
     down: '<path d="M6 9l6 6 6-6"/>',
@@ -464,16 +489,16 @@
     modalRoot.setAttribute("aria-hidden", "true");
   }
 
-  function openSheet(innerHtml, { onMount } = {}) {
+  function openSheet(innerHtml, { onMount, cls, onClose } = {}) {
     modalRoot.innerHTML = `
       <div class="modal-backdrop" data-close></div>
-      <div class="modal-sheet" role="dialog">
+      <div class="modal-sheet ${cls || ""}" role="dialog">
         <div class="sheet-handle"></div>
         ${innerHtml}
       </div>`;
     modalRoot.classList.add("open");
     modalRoot.setAttribute("aria-hidden", "false");
-    modalRoot.querySelector(".modal-backdrop").addEventListener("click", closeModal);
+    modalRoot.querySelector(".modal-backdrop").addEventListener("click", () => { closeModal(); if (onClose) onClose(); });
     if (onMount) onMount(modalRoot);
   }
 
@@ -620,12 +645,16 @@
             quarter: 1,
             oppScore: 0,
             events: [],
+            rosterIds: [],
             createdAt: Date.now(),
           };
           DB.games.push(game);
           saveDB();
           closeModal();
           go("/game/" + game.id);
+          // Preguntamos de inmediato quién juega hoy, así no hay que
+          // buscar el botón después con el partido ya empezado.
+          setTimeout(() => openRosterPicker(game), 260);
         });
       }
     });
@@ -647,15 +676,20 @@
     const them = game.oppScore || 0;
     const isFinal = game.status === "final";
 
-    view.appendChild(el(`
+    const gameHead = el(`
       <div class="pagehead">
-        <div>
-          <div class="sub">${game.isHome ? "Local vs" : "Visitante @"} ${esc(game.opponent)}</div>
-          <h1 style="font-size:24px">${esc(DB.team.name)}</h1>
+        <div class="pagehead-left">
+          <button class="iconbtn" id="back-btn"><svg viewBox="0 0 24 24">${ICONS.back}</svg></button>
+          <div>
+            <div class="sub">${game.isHome ? "Local vs" : "Visitante @"} ${esc(game.opponent)}</div>
+            <h1 style="font-size:24px">${esc(DB.team.name)}</h1>
+          </div>
         </div>
         <button class="iconbtn" id="game-menu-btn"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
       </div>
-    `));
+    `);
+    view.appendChild(gameHead);
+    gameHead.querySelector("#back-btn").addEventListener("click", () => goBack("/"));
 
     // Cabecera fija (marcador compacto + selector de jugador): se queda
     // pegada arriba al hacer scroll para que nunca haga falta buscarla.
@@ -685,6 +719,10 @@
             </div>
           </div>
         </div>` : ""}
+        <div class="roster-row">
+          <span class="hint" id="roster-count"></span>
+          ${!isFinal ? `<button type="button" class="roster-edit-btn" id="roster-edit-btn"><svg viewBox="0 0 24 24">${ICONS.team}</svg>Convocatoria</button>` : ""}
+        </div>
         <div class="player-strip" id="player-strip"></div>
       </div>
     `);
@@ -715,8 +753,19 @@
       });
     }
 
+    // Convocatoria: si el partido ya tiene jugadores seleccionados, se
+    // muestran solo esos (de un vistazo, sin scroll lateral). Si todavía
+    // no se ha elegido a nadie, se muestra la plantilla completa como
+    // valor por defecto para no bloquear el registro de estadísticas.
+    const allPlayers = activePlayers();
+    const roster = (game.rosterIds && game.rosterIds.length)
+      ? allPlayers.filter(p => game.rosterIds.includes(p.id))
+      : allPlayers;
+
+    sticky.querySelector("#roster-count").textContent =
+      game.rosterIds && game.rosterIds.length ? `${roster.length} convocados` : "Sin convocatoria (se ven todos)";
+
     const strip = sticky.querySelector("#player-strip");
-    const roster = activePlayers();
     const selected = liveSelectedPlayer[game.id];
     roster.forEach(p => {
       const s = aggregate(playerEventsInGame(game, p.id));
@@ -734,11 +783,17 @@
       strip.appendChild(chip);
     });
 
-    if (roster.length === 0) {
+    if (!isFinal) {
+      sticky.querySelector("#roster-edit-btn").addEventListener("click", () => requireAdmin(() => openRosterPicker(game)));
+    }
+
+    if (allPlayers.length === 0) {
       view.appendChild(el(`<p class="hint" style="margin-top:14px">Añade jugadores en la Plantilla para poder registrar estadísticas.</p>`));
-    } else if (selected && !isFinal && isUnlocked()) {
+    } else if (roster.length === 0) {
+      view.appendChild(el(`<p class="hint" style="margin-top:14px">No hay jugadores convocados. Toca "Convocatoria" para elegir quién juega.</p>`));
+    } else if (selected && roster.some(p => p.id === selected) && !isFinal && isUnlocked()) {
       renderStatPad(view, game, getPlayer(selected));
-    } else if (selected) {
+    } else if (selected && roster.some(p => p.id === selected)) {
       const reason = isFinal
         ? (isUnlocked() ? "Partido finalizado. Reabre el partido desde el menú para seguir editando." : "Partido finalizado.")
         : "Modo solo lectura. Desbloquea el modo administrador para registrar estadísticas.";
@@ -750,6 +805,67 @@
     view.querySelector("#game-menu-btn").addEventListener("click", () => requireAdmin(() => openGameMenu(game)));
 
     function renderView() { location.hash = location.hash; render(); }
+  }
+
+  // Sheet a pantalla completa para elegir qué jugadores están convocados
+  // a este partido. Cada fila se marca/desmarca al tocarla — sin botón
+  // de confirmar al final, así nunca hay que hacer scroll para guardar.
+  function openRosterPicker(game) {
+    const allPlayers = [...activePlayers()].sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
+    if (!game.rosterIds) game.rosterIds = [];
+
+    openSheet(`
+      <div class="picker-head">
+        <h3 class="modal-title" style="margin-bottom:0">¿Quién juega hoy?</h3>
+        <button class="iconbtn" id="rp-close"><svg viewBox="0 0 24 24">${ICONS.x}</svg></button>
+      </div>
+      <div class="picker-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="rp-all">Todos</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="rp-none">Ninguno</button>
+      </div>
+      <div class="picker-list" id="rp-list"></div>
+    `, {
+      cls: "tall",
+      onClose() { location.hash = location.hash; render(); },
+      onMount(root) {
+        const list = root.querySelector("#rp-list");
+        function renderRows() {
+          list.innerHTML = "";
+          allPlayers.forEach(p => {
+            const checked = game.rosterIds.includes(p.id);
+            const row = el(`
+              <div class="picker-row ${checked ? "checked" : ""}" data-pid="${p.id}">
+                <div class="num">${esc(p.number ?? "")}</div>
+                <div class="info"><div class="nm">${esc(p.name)}</div><div class="pos">${esc(p.position || "")}</div></div>
+                <div class="check">${checked ? `<svg viewBox="0 0 24 24">${ICONS.check}</svg>` : ""}</div>
+              </div>
+            `);
+            row.addEventListener("click", () => {
+              const idx = game.rosterIds.indexOf(p.id);
+              if (idx >= 0) game.rosterIds.splice(idx, 1); else game.rosterIds.push(p.id);
+              saveDB();
+              renderRows();
+            });
+            list.appendChild(row);
+          });
+        }
+        renderRows();
+        root.querySelector("#rp-all").addEventListener("click", () => {
+          game.rosterIds = allPlayers.map(p => p.id);
+          saveDB();
+          renderRows();
+        });
+        root.querySelector("#rp-none").addEventListener("click", () => {
+          game.rosterIds = [];
+          saveDB();
+          renderRows();
+        });
+        root.querySelector("#rp-close").addEventListener("click", () => {
+          closeModal();
+          location.hash = location.hash; render();
+        });
+      }
+    });
   }
 
   function shortName(name) {
@@ -1062,15 +1178,20 @@
     const gp = gamesPlayedBy(player.id);
     const s = aggregate(events);
 
-    view.appendChild(el(`
+    const playerHead = el(`
       <div class="pagehead">
-        <div>
-          <div class="sub">#${esc(player.number ?? "-")} · ${esc(player.position || "Jugador")}</div>
-          <h1 style="font-size:26px">${esc(player.name)}</h1>
+        <div class="pagehead-left">
+          <button class="iconbtn" id="back-btn"><svg viewBox="0 0 24 24">${ICONS.back}</svg></button>
+          <div>
+            <div class="sub">#${esc(player.number ?? "-")} · ${esc(player.position || "Jugador")}</div>
+            <h1 style="font-size:26px">${esc(player.name)}</h1>
+          </div>
         </div>
         <button class="iconbtn" id="edit-player-btn"><svg viewBox="0 0 24 24">${ICONS.edit}</svg></button>
       </div>
-    `));
+    `);
+    view.appendChild(playerHead);
+    playerHead.querySelector("#back-btn").addEventListener("click", () => goBack("/roster"));
 
     view.appendChild(el(`<div class="section-title">Promedios de temporada (${gp} PJ)</div>`));
     view.appendChild(el(`
