@@ -395,14 +395,19 @@
     return null;
   }
 
+  // Muchas acciones (anotar un tiro, deshacer, sincronizar con la nube...)
+  // vuelven a pintar la vista actual sin cambiar de página — en esos casos
+  // NO debe saltar el scroll arriba, solo cuando la ruta cambia de verdad.
+  let lastRenderedPath = null;
   function render() {
     const path = parseHash();
+    const isNavigation = path !== lastRenderedPath;
+    lastRenderedPath = path;
     const m = matchRoute(path);
     const view = document.getElementById("view");
     if (!m) { view.innerHTML = emptyState("¿?", "Página no encontrada", ""); return; }
     view.innerHTML = "";
-    view.scrollTop = 0;
-    window.scrollTo(0, 0);
+    if (isNavigation) window.scrollTo(0, 0);
     m.handler(view, m.params);
     updateTabbar(path);
     renderAdminBadge();
