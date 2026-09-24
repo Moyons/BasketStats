@@ -240,6 +240,7 @@ a { color: inherit; text-decoration: none; }
 }
 .game-score .dash { color: var(--text-muted); font-size: 22px; }
 .game-score .them { color: var(--text-secondary); }
+.game-score .them-label { font-size: 13px; color: var(--text-muted); font-weight: 600; align-self: flex-end; margin-bottom: 5px; }
 .game-meta { margin-top: 6px; font-size: 12.5px; color: var(--text-muted); }
 
 .empty-state {
@@ -347,8 +348,15 @@ a { color: inherit; text-decoration: none; }
   display: flex; align-items: center; justify-content: space-between;
   padding-bottom: 10px;
 }
-.picker-actions { display: flex; gap: 8px; margin-bottom: 10px; }
 .picker-list { padding-bottom: 4px; }
+.picker-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface-1);
+  padding: 12px 0 calc(4px + var(--safe-b));
+  margin-top: 4px;
+  box-shadow: 0 -12px 12px -8px var(--surface-1);
+}
 .picker-row {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 4px;
@@ -457,6 +465,7 @@ a { color: inherit; text-decoration: none; }
 }
 .mini-us { color: var(--accent); }
 .mini-them { color: var(--text-secondary); }
+.mini-us-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-right: 4px; align-self: flex-end; margin-bottom: 3px; }
 .mini-sep { color: var(--text-muted); font-size: 16px; }
 .mini-vs { font-size: 12.5px; color: var(--text-muted); font-weight: 600; margin-left: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 30vw; }
 .mini-q { font-size: 11.5px; color: var(--text-muted); font-weight: 700; background: var(--surface-2); padding: 3px 8px; border-radius: 999px; }
@@ -564,6 +573,8 @@ a { color: inherit; text-decoration: none; }
 .statbtn .cnt { font-size: 11px; color: var(--text-muted); font-weight: 600; }
 .statbtn.made { border-color: rgba(12,163,12,0.4); background: rgba(12,163,12,0.10); }
 .statbtn.miss { border-color: rgba(230,103,103,0.35); background: rgba(230,103,103,0.08); }
+.statbtn.foul-out { border-color: rgba(230,103,103,0.5); background: rgba(230,103,103,0.14); }
+.statbtn.foul-out .cnt { color: var(--critical); font-weight: 800; }
 .statbtn.wide { grid-column: span 3; flex-direction: row; justify-content: center; }
 .statbtn:active { transform: scale(0.96); }
 .statbtn.flash { animation: flash .3s ease; }
@@ -728,6 +739,9 @@ table.stats-table tbody tr:nth-child(odd) { background: rgba(255,255,255,0.015);
 table.stats-table tbody tr:nth-child(odd) td:first-child { background: var(--surface-2); }
 table.stats-table tbody td:first-child { background: var(--surface-1); font-weight: 700; color: var(--text-primary); }
 table.stats-table tbody tr:active { background: var(--surface-3); }
+table.stats-table tbody tr.totals-row { font-weight: 800; border-top: 2px solid var(--border-strong); }
+table.stats-table tbody tr.totals-row td:first-child { background: var(--surface-2); color: var(--text-primary); }
+table.stats-table tbody tr.totals-row:active { background: var(--surface-2); }
 
 .pill-toggle { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 4px; }
 .pill-toggle button {

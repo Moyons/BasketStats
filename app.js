@@ -302,6 +302,7 @@
     { key: "tov", label: "Pérdida", short: "PER" },
     { key: "foul", label: "Falta", short: "FAL" },
   ];
+  const FOUL_LIMIT = 5; // se elimina al llegar a 5 faltas personales
 
   function pointsForEvent(ev) {
     if (ev.type === "ft" && ev.made) return 1;
@@ -585,21 +586,22 @@
 
   function gameCard(g) {
     const us = teamScore(g);
+    const hasRivalScore = g.oppScore !== null && g.oppScore !== undefined;
     const them = g.oppScore || 0;
     const d = g.date ? new Date(g.date) : new Date(g.createdAt);
     const dateStr = d.toLocaleDateString("es-ES", { day: "2-digit", month: "short" });
+    const result = g.status === "final" && hasRivalScore ? (us > them ? " · Victoria" : us < them ? " · Derrota" : " · Empate") : "";
     const card = el(`
       <a class="game-card" href="#/game/${g.id}">
         <div class="game-card-top">
-          <div class="game-vs">${g.isHome ? "vs" : "@"} <b>${esc(g.opponent || "Rival")}</b></div>
+          <div class="game-vs">vs <b>${esc(g.opponent || "Rival")}</b></div>
           <span class="badge ${g.status === "live" ? "badge-live" : "badge-final"}">${g.status === "live" ? "En vivo" : "Final"}</span>
         </div>
         <div class="game-score">
           <span class="us">${us}</span>
-          <span class="dash">–</span>
-          <span class="them">${them}</span>
+          ${hasRivalScore ? `<span class="dash">–</span><span class="them">${them}</span>` : `<span class="them-label">puntos</span>`}
         </div>
-        <div class="game-meta">${dateStr}${g.status === "final" ? (us > them ? " · Victoria" : us < them ? " · Derrota" : " · Empate") : ""}</div>
+        <div class="game-meta">${dateStr}${result}</div>
       </a>
     `);
     return card;
@@ -625,36 +627,21 @@
         <label>Fecha</label>
         <input type="date" id="ng-date">
       </div>
-      <div class="field">
-        <label>Condición</label>
-        <div class="seg">
-          <button type="button" class="active" data-home="1">Local</button>
-          <button type="button" data-home="0">Visitante</button>
-        </div>
-      </div>
       <button class="btn btn-primary btn-block" id="ng-create">Empezar partido</button>
     `, {
       onMount(root) {
         const dateInput = root.querySelector("#ng-date");
         dateInput.value = new Date().toISOString().slice(0, 10);
-        let isHome = true;
-        root.querySelectorAll(".seg button").forEach(b => {
-          b.addEventListener("click", () => {
-            root.querySelectorAll(".seg button").forEach(x => x.classList.remove("active"));
-            b.classList.add("active");
-            isHome = b.dataset.home === "1";
-          });
-        });
+        root.querySelector("#ng-opponent").focus();
         root.querySelector("#ng-create").addEventListener("click", () => {
           const opponent = root.querySelector("#ng-opponent").value.trim();
           const game = {
             id: uid(),
             opponent: opponent || "Rival",
-            isHome,
             date: dateInput.value || new Date().toISOString().slice(0, 10),
             status: "live",
             quarter: 1,
-            oppScore: 0,
+            oppScore: null,
             events: [],
             rosterIds: [],
             createdAt: Date.now(),
@@ -692,7 +679,7 @@
         <div class="pagehead-left">
           <button class="iconbtn" id="back-btn"><svg viewBox="0 0 24 24">${ICONS.back}</svg></button>
           <div>
-            <div class="sub">${game.isHome ? "Local vs" : "Visitante @"} ${esc(game.opponent)}</div>
+            <div class="sub">vs ${esc(game.opponent)}</div>
             <h1 style="font-size:24px">${esc(DB.team.name)}</h1>
           </div>
         </div>
@@ -702,33 +689,29 @@
     view.appendChild(gameHead);
     gameHead.querySelector("#back-btn").addEventListener("click", () => goBack("/"));
 
-    // Cabecera fija (marcador compacto + selector de jugador): se queda
-    // pegada arriba al hacer scroll para que nunca haga falta buscarla.
+    // Cabecera fija (puntos + selector de jugador): se queda pegada
+    // arriba al hacer scroll para que nunca haga falta buscarla. No
+    // mostramos el marcador del rival durante el partido — solo importa
+    // al finalizar, y ahí se puede añadir si se quiere.
     const sticky = el(`
       <div class="live-sticky">
         <div class="mini-score">
           <span class="mini-us tabular">${us}</span>
-          <span class="mini-sep">–</span>
-          <span class="mini-them tabular">${them}</span>
-          <span class="mini-vs">${esc(game.opponent)}</span>
+          <span class="mini-us-label">PTS</span>
+          <span class="mini-vs">vs ${esc(game.opponent)}</span>
           <span class="mini-q">${isFinal ? "FINAL" : "Q" + (game.quarter || 1)}</span>
-          ${!isFinal ? `<button type="button" class="mini-expand" id="score-expand-btn">Marcador y periodo <svg viewBox="0 0 24 24">${ICONS.down}</svg></button>` : ""}
+          ${!isFinal ? `<button type="button" class="mini-expand" id="score-expand-btn">Periodo <svg viewBox="0 0 24 24">${ICONS.down}</svg></button>` : ""}
         </div>
         ${!isFinal ? `
         <div class="rival-quarter-panel" id="rival-quarter-panel" hidden>
-          <div class="rival-controls">
-            <button data-opp="-1">−1</button>
-            <button data-opp="1">Rival +1</button>
-            <button data-opp="2">Rival +2</button>
-            <button data-opp="3">Rival +3</button>
-          </div>
-          <div class="quarter-row">
+          <div class="quarter-row" style="margin-top:0">
             <span class="hint">Periodo</span>
             <div class="seg" style="width:auto" id="quarter-seg">
               ${[1,2,3,4].map(q => `<button type="button" data-q="${q}" class="${(game.quarter||1)===q?'active':''}">Q${q}</button>`).join("")}
               <button type="button" data-q="5" class="${(game.quarter||1)===5?'active':''}">PR</button>
             </div>
           </div>
+          <button type="button" class="btn btn-primary btn-block" id="finish-game-btn" style="margin-top:14px">Finalizar partido</button>
         </div>` : ""}
         <div class="roster-row">
           <span class="hint" id="roster-count"></span>
@@ -747,14 +730,6 @@
         if (willShow) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", "");
         btn.classList.toggle("open", willShow);
       });
-      sticky.querySelectorAll(".rival-controls button").forEach(b => {
-        b.addEventListener("click", () => requireAdmin(() => {
-          const d = parseInt(b.dataset.opp, 10);
-          game.oppScore = Math.max(0, (game.oppScore || 0) + d);
-          saveDB();
-          renderView();
-        }));
-      });
       sticky.querySelectorAll("#quarter-seg button").forEach(b => {
         b.addEventListener("click", () => requireAdmin(() => {
           game.quarter = parseInt(b.dataset.q, 10);
@@ -762,6 +737,7 @@
           renderView();
         }));
       });
+      sticky.querySelector("#finish-game-btn").addEventListener("click", () => requireAdmin(() => openFinishGameSheet(game)));
     }
 
     // Convocatoria: si el partido ya tiene jugadores seleccionados, se
@@ -798,17 +774,25 @@
       sticky.querySelector("#roster-edit-btn").addEventListener("click", () => requireAdmin(() => openRosterPicker(game)));
     }
 
+    const selectedPlayer = selected && roster.some(p => p.id === selected) ? getPlayer(selected) : null;
+
     if (allPlayers.length === 0) {
       view.appendChild(el(`<p class="hint" style="margin-top:14px">Añade jugadores en la Plantilla para poder registrar estadísticas.</p>`));
     } else if (roster.length === 0) {
       view.appendChild(el(`<p class="hint" style="margin-top:14px">No hay jugadores convocados. Toca "Convocatoria" para elegir quién juega.</p>`));
-    } else if (selected && roster.some(p => p.id === selected) && !isFinal && isUnlocked()) {
-      renderStatPad(view, game, getPlayer(selected));
-    } else if (selected && roster.some(p => p.id === selected)) {
-      const reason = isFinal
-        ? (isUnlocked() ? "Partido finalizado. Reabre el partido desde el menú para seguir editando." : "Partido finalizado.")
-        : "Modo solo lectura. Desbloquea el modo administrador para registrar estadísticas.";
-      renderReadOnlyPlayerStats(view, game, getPlayer(selected), reason);
+    } else if (isFinal) {
+      // El resumen completo siempre va primero (aunque haya un jugador
+      // seleccionado de cuando el partido estaba en juego), y si además
+      // hay alguien seleccionado se ve su detalle jugada a jugada debajo.
+      renderGameSummary(view, game, roster);
+      if (selectedPlayer) {
+        view.appendChild(el(`<div class="section-title">Detalle: ${esc(selectedPlayer.name)}</div>`));
+        renderReadOnlyPlayerStats(view, game, selectedPlayer, isUnlocked() ? "Reabre el partido desde el menú para seguir editando." : "Partido finalizado.");
+      }
+    } else if (selectedPlayer && isUnlocked()) {
+      renderStatPad(view, game, selectedPlayer);
+    } else if (selectedPlayer) {
+      renderReadOnlyPlayerStats(view, game, selectedPlayer, "Modo solo lectura. Desbloquea el modo administrador para registrar estadísticas.");
     } else {
       view.appendChild(el(`<p class="hint" style="margin-top:14px">Toca un jugador arriba para empezar a anotar.</p>`));
     }
@@ -828,18 +812,21 @@
     openSheet(`
       <div class="picker-head">
         <h3 class="modal-title" style="margin-bottom:0">¿Quién juega hoy?</h3>
-        <button class="iconbtn" id="rp-close"><svg viewBox="0 0 24 24">${ICONS.x}</svg></button>
-      </div>
-      <div class="picker-actions">
-        <button type="button" class="btn btn-ghost btn-sm" id="rp-all">Todos</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="rp-none">Ninguno</button>
       </div>
       <div class="picker-list" id="rp-list"></div>
+      <div class="picker-footer">
+        <button type="button" class="btn btn-primary btn-block" id="rp-confirm">Confirmar convocatoria</button>
+      </div>
     `, {
       cls: "tall",
       onClose() { location.hash = location.hash; render(); },
       onMount(root) {
         const list = root.querySelector("#rp-list");
+        const confirmBtn = root.querySelector("#rp-confirm");
+        function updateConfirmLabel() {
+          const n = game.rosterIds.length;
+          confirmBtn.textContent = n > 0 ? `Confirmar convocatoria (${n})` : "Confirmar convocatoria";
+        }
         function renderRows() {
           list.innerHTML = "";
           allPlayers.forEach(p => {
@@ -856,27 +843,111 @@
               if (idx >= 0) game.rosterIds.splice(idx, 1); else game.rosterIds.push(p.id);
               saveDB();
               renderRows();
+              updateConfirmLabel();
             });
             list.appendChild(row);
           });
         }
         renderRows();
-        root.querySelector("#rp-all").addEventListener("click", () => {
-          game.rosterIds = allPlayers.map(p => p.id);
-          saveDB();
-          renderRows();
-        });
-        root.querySelector("#rp-none").addEventListener("click", () => {
-          game.rosterIds = [];
-          saveDB();
-          renderRows();
-        });
-        root.querySelector("#rp-close").addEventListener("click", () => {
+        updateConfirmLabel();
+        confirmBtn.addEventListener("click", () => {
           closeModal();
           location.hash = location.hash; render();
         });
       }
     });
+  }
+
+  // Sheet sencilla para cerrar el partido: un único botón grande, con
+  // el resultado del rival como campo opcional (no lo llevamos durante
+  // el partido, solo interesa el resultado final si se quiere guardar).
+  function openFinishGameSheet(game) {
+    openSheet(`
+      <h3 class="modal-title">Finalizar partido</h3>
+      <p class="hint" style="margin-bottom:14px">Vuestros puntos: <b class="tabular" style="color:var(--text-primary)">${teamScore(game)}</b></p>
+      <div class="field">
+        <label>Puntos del rival (opcional)</label>
+        <input type="number" id="fg-opp" min="0" placeholder="Déjalo en blanco si no lo apuntas">
+      </div>
+      <button class="btn btn-primary btn-block" id="fg-confirm">Finalizar partido</button>
+    `, {
+      onMount(root) {
+        root.querySelector("#fg-opp").focus();
+        root.querySelector("#fg-confirm").addEventListener("click", () => {
+          const v = root.querySelector("#fg-opp").value;
+          game.oppScore = v === "" ? null : Math.max(0, parseInt(v, 10) || 0);
+          game.status = "final";
+          saveDB();
+          closeModal();
+          location.hash = location.hash; render();
+          toast("Partido finalizado");
+        });
+      }
+    });
+  }
+
+  // Resumen del partido finalizado: estadísticas completas de cada
+  // convocado que llegó a jugar, para verlo todo de un vistazo.
+  function renderGameSummary(view, game, roster) {
+    const rows = roster
+      .map(p => ({ player: p, s: aggregate(playerEventsInGame(game, p.id)) }))
+      .filter(r => r.s.pts + r.s.reb + r.s.ast + r.s.stl + r.s.blk + r.s.tov + r.s.foul + r.s.fga + r.s.fta > 0);
+
+    view.appendChild(el(`<div class="section-title">Resumen del partido</div>`));
+
+    if (rows.length === 0) {
+      view.appendChild(el(`<p class="hint" style="margin-top:2px">No se registraron estadísticas en este partido.</p>`));
+      return;
+    }
+
+    rows.sort((a, b) => b.s.pts - a.s.pts);
+    const wrap = el(`<div class="table-wrap"></div>`);
+    const table = el(`
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Jugador</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>FAL</th><th>TC</th><th>3P</th><th>TL</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr data-pid="${r.player.id}">
+              <td>${esc(shortName(r.player.name))}</td>
+              <td>${r.s.pts}</td>
+              <td>${r.s.reb}</td>
+              <td>${r.s.ast}</td>
+              <td>${r.s.stl}</td>
+              <td>${r.s.blk}</td>
+              <td>${r.s.tov}</td>
+              <td>${r.s.foul}${r.s.foul >= 5 ? " ⚠" : ""}</td>
+              <td>${r.s.p2m + r.s.p3m}/${r.s.p2a + r.s.p3a}</td>
+              <td>${r.s.p3m}/${r.s.p3a}</td>
+              <td>${r.s.ftm}/${r.s.fta}</td>
+            </tr>
+          `).join("")}
+          <tr class="totals-row">
+            <td>Total</td>
+            <td>${rows.reduce((a, r) => a + r.s.pts, 0)}</td>
+            <td>${rows.reduce((a, r) => a + r.s.reb, 0)}</td>
+            <td>${rows.reduce((a, r) => a + r.s.ast, 0)}</td>
+            <td>${rows.reduce((a, r) => a + r.s.stl, 0)}</td>
+            <td>${rows.reduce((a, r) => a + r.s.blk, 0)}</td>
+            <td>${rows.reduce((a, r) => a + r.s.tov, 0)}</td>
+            <td>${rows.reduce((a, r) => a + r.s.foul, 0)}</td>
+            <td colspan="3"></td>
+          </tr>
+        </tbody>
+      </table>
+    `);
+    wrap.appendChild(table);
+    table.querySelectorAll("tbody tr[data-pid]").forEach(tr => {
+      tr.addEventListener("click", () => {
+        liveSelectedPlayer[game.id] = tr.dataset.pid;
+        location.hash = location.hash; render();
+      });
+    });
+    view.appendChild(wrap);
+    view.appendChild(el(`<p class="hint" style="margin-top:10px">Toca un jugador (arriba o en la tabla) para ver su detalle jugada a jugada.</p>`));
   }
 
   function shortName(name) {
@@ -919,7 +990,9 @@
     const simpleGroup = el(`<div class="statgroup"><div class="statgroup-label">Otras estadísticas</div><div class="statgrid statgrid-2" id="simple-grid"></div></div>`);
     SIMPLE_TYPES.forEach(t => {
       const count = s[t.key] !== undefined ? s[t.key] : events.filter(e => e.type === t.key).length;
-      const b = el(`<button class="statbtn statbtn-lg" data-type="${t.key}"><span class="lbl">${t.label}</span><span class="cnt">${count}</span></button>`);
+      const isFoul = t.key === "foul";
+      const foulOut = isFoul && count >= FOUL_LIMIT;
+      const b = el(`<button class="statbtn statbtn-lg ${foulOut ? "foul-out" : ""}" data-type="${t.key}"><span class="lbl">${t.label}${isFoul && foulOut ? " ⚠" : ""}</span><span class="cnt">${isFoul ? `${count}/${FOUL_LIMIT}` : count}</span></button>`);
       simpleGroup.querySelector("#simple-grid").appendChild(b);
     });
     pad.appendChild(simpleGroup);
@@ -929,12 +1002,22 @@
     pad.querySelectorAll(".statbtn").forEach(btn => {
       btn.addEventListener("click", () => {
         const type = btn.dataset.type;
+        if (type === "foul" && s.foul >= FOUL_LIMIT) {
+          toast(`${player.name.split(" ")[0]} ya tiene ${FOUL_LIMIT} faltas`);
+          if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+          return;
+        }
         const made = btn.dataset.made === undefined ? undefined : btn.dataset.made === "1";
         const ev = { id: uid(), playerId: player.id, type, made: made === undefined ? undefined : made, ts: Date.now(), quarter: game.quarter || 1 };
         game.events.push(ev);
         saveDB();
-        toast(statAddedMsg(type, made));
-        if (navigator.vibrate) navigator.vibrate(12);
+        if (type === "foul" && s.foul + 1 >= FOUL_LIMIT) {
+          toast(`${player.name.split(" ")[0]} eliminado por faltas (${FOUL_LIMIT})`);
+          if (navigator.vibrate) navigator.vibrate([10, 40, 10, 40, 10]);
+        } else {
+          toast(statAddedMsg(type, made));
+          if (navigator.vibrate) navigator.vibrate(12);
+        }
         location.hash = location.hash; render();
       });
     });
@@ -1055,7 +1138,7 @@
   function openGameMenu(game) {
     const isFinal = game.status === "final";
     openSheet(`
-      <h3 class="modal-title">${esc(game.isHome ? "vs" : "@")} ${esc(game.opponent)}</h3>
+      <h3 class="modal-title">vs ${esc(game.opponent)}</h3>
       <div class="field">
         <label>Rival</label>
         <input type="text" id="gm-opponent" value="${esc(game.opponent)}">
@@ -1064,20 +1147,27 @@
         <label>Fecha</label>
         <input type="date" id="gm-date" value="${esc(game.date || "")}">
       </div>
-      <button class="btn btn-block ${isFinal ? "btn-ghost" : "btn-primary"}" id="gm-toggle-final" style="margin-bottom:10px">
-        ${isFinal ? "Reabrir partido" : "Finalizar partido"}
-      </button>
+      <div class="field">
+        <label>Resultado del rival (opcional)</label>
+        <input type="number" id="gm-oppscore" min="0" value="${game.oppScore ?? ""}" placeholder="Sin apuntar">
+      </div>
+      ${isFinal ? `<button class="btn btn-ghost btn-block" id="gm-reopen" style="margin-bottom:10px">Reabrir partido</button>` : ""}
       <button class="btn btn-danger btn-block" id="gm-delete">Eliminar partido</button>
     `, {
       onMount(root) {
         root.querySelector("#gm-opponent").addEventListener("change", (e) => { game.opponent = e.target.value.trim() || "Rival"; saveDB(); });
         root.querySelector("#gm-date").addEventListener("change", (e) => { game.date = e.target.value; saveDB(); });
-        root.querySelector("#gm-toggle-final").addEventListener("click", () => {
-          game.status = isFinal ? "live" : "final";
+        root.querySelector("#gm-oppscore").addEventListener("change", (e) => {
+          const v = e.target.value;
+          game.oppScore = v === "" ? null : Math.max(0, parseInt(v, 10) || 0);
+          saveDB();
+        });
+        root.querySelector("#gm-reopen")?.addEventListener("click", () => {
+          game.status = "live";
           saveDB();
           closeModal();
           location.hash = location.hash; render();
-          toast(isFinal ? "Partido reabierto" : "Partido finalizado");
+          toast("Partido reabierto");
         });
         root.querySelector("#gm-delete").addEventListener("click", () => {
           closeModal();
