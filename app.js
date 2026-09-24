@@ -15,7 +15,13 @@
      --------------------------------------------------------- */
   const DB_KEY = "basketstats_v1";
   const CLOUD_BASE = "https://basketstats-9e5e7-default-rtdb.europe-west1.firebasedatabase.app";
-  const CLOUD_PATH = "/data.json";
+  // IMPORTANTE: /data.json es la base de datos real que usa todo el mundo.
+  // Para pruebas se abre la app con ?testdb=1 en la URL, que la redirige a
+  // un espacio aislado (_test_sandbox) — así ninguna prueba puede tocar
+  // nunca los datos reales por accidente.
+  const CLOUD_PATH = new URLSearchParams(location.search).get("testdb")
+    ? "/_test_sandbox/data.json"
+    : "/data.json";
 
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
