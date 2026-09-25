@@ -72,7 +72,7 @@ a { color: inherit; text-decoration: none; }
 
 #view {
   min-height: 100%;
-  padding: calc(env(safe-area-inset-top) + 44px) 16px calc(var(--tabbar-h) + var(--safe-b) + 28px);
+  padding: calc(env(safe-area-inset-top) + 40px) 16px calc(var(--tabbar-h) + var(--safe-b) + 28px);
   max-width: 640px;
   margin: 0 auto;
 }
@@ -128,8 +128,10 @@ a { color: inherit; text-decoration: none; }
 }
 .pagehead h1 { font-size: 30px; }
 .pagehead .sub { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
-.pagehead-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pagehead-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .pagehead-left .iconbtn { flex-shrink: 0; }
+.iconbtn-sm { width: 34px; height: 34px; border-radius: 10px; }
+.iconbtn-sm svg { width: 17px; height: 17px; }
 .iconbtn {
   width: 40px; height: 40px;
   border-radius: 12px;
@@ -386,7 +388,7 @@ a { color: inherit; text-decoration: none; }
 
 .roster-row {
   display: flex; align-items: center; justify-content: space-between;
-  margin-top: 12px; margin-bottom: 8px;
+  margin-top: 5px; margin-bottom: 4px;
 }
 .roster-edit-btn {
   display: flex; align-items: center; gap: 6px;
@@ -443,18 +445,18 @@ a { color: inherit; text-decoration: none; }
    pegada arriba del scroll para no tener que buscarla nunca. */
 .live-sticky {
   position: sticky;
-  top: calc(env(safe-area-inset-top) + 44px);
+  top: calc(env(safe-area-inset-top) + 40px);
   z-index: 25;
   background: var(--page);
   margin: 0 -16px;
-  padding: 0 16px 10px;
+  padding: 0 16px 6px;
   border-bottom: 1px solid var(--border);
 }
 .mini-score {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 10px 0 8px;
+  gap: 6px;
+  padding: 6px 0 2px;
   flex-wrap: wrap;
 }
 .mini-us, .mini-them {
@@ -469,43 +471,18 @@ a { color: inherit; text-decoration: none; }
 .mini-sep { color: var(--text-muted); font-size: 16px; }
 .mini-vs { font-size: 12.5px; color: var(--text-muted); font-weight: 600; margin-left: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 30vw; }
 .mini-q { font-size: 11.5px; color: var(--text-muted); font-weight: 700; background: var(--surface-2); padding: 3px 8px; border-radius: 999px; }
-.mini-expand {
+.mini-finish-btn {
   margin-left: auto;
-  display: flex; align-items: center; gap: 4px;
-  background: transparent; border: none;
-  color: var(--text-muted);
-  font-size: 11.5px; font-weight: 700;
-  padding: 4px 2px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 999px;
   cursor: pointer;
 }
-.mini-expand svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.3; transition: transform .15s ease; }
-.mini-expand.open svg { transform: rotate(180deg); }
-
-.rival-quarter-panel {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  padding: 14px;
-  margin-bottom: 10px;
-}
-.rival-controls {
-  display: flex; justify-content: center; gap: 8px;
-}
-.rival-controls button {
-  border: 1px solid var(--border-strong);
-  background: var(--surface-3);
-  color: var(--text-primary);
-  border-radius: 10px;
-  padding: 8px 14px;
-  font-weight: 700;
-  font-size: 13px;
-}
-.rival-controls button:active { background: var(--surface-2); }
-
-.quarter-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 14px;
-}
+.mini-finish-btn:active { background: var(--surface-2); }
 
 .player-strip {
   display: grid;
@@ -519,20 +496,20 @@ a { color: inherit; text-decoration: none; }
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
-  padding: 9px 6px 7px;
+  padding: 5px 5px 4px;
   text-align: center;
   cursor: pointer;
 }
 .player-chip:active, .player-chip.active { background: var(--surface-3); border-color: var(--border-strong); }
 .player-chip .num {
-  width: 34px; height: 34px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   background: var(--surface-3);
   border: 1px solid var(--border-strong);
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 6px;
+  margin: 0 auto 4px;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
   font-family: "Barlow Condensed", sans-serif;
 }
 .player-chip.active .num { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
@@ -540,22 +517,23 @@ a { color: inherit; text-decoration: none; }
 .player-chip .pts { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
 
 .statpad-head {
-  display: flex; align-items: center; gap: 10px;
-  margin: 20px 0 12px;
+  display: flex; align-items: center; gap: 8px;
+  margin: 4px 0 4px;
 }
 .statpad-head .num {
-  width: 38px; height: 38px; border-radius: 50%;
+  width: 32px; height: 32px; border-radius: 50%;
   background: var(--accent); color: var(--accent-ink);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-family: "Barlow Condensed", sans-serif; font-size: 16px;
+  font-weight: 800; font-family: "Barlow Condensed", sans-serif; font-size: 14px;
+  flex-shrink: 0;
 }
-.statpad-head .name { font-size: 17px; font-weight: 700; }
-.statpad-head .line { font-size: 12.5px; color: var(--text-muted); }
+.statpad-head .name { font-size: 15px; font-weight: 700; }
+.statpad-head .line { font-size: 12px; color: var(--text-muted); }
 
-.statgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.statgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .statgrid-2 { grid-template-columns: repeat(2, 1fr); }
-.statgroup { margin-bottom: 10px; }
-.statgroup-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 2px 6px; }
+.statgroup { margin-bottom: 4px; }
+.statgroup-label { font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 2px 3px; }
 .statbtn {
   position: relative;
   border: 1px solid var(--border-strong);
@@ -580,15 +558,17 @@ a { color: inherit; text-decoration: none; }
 .statbtn.flash { animation: flash .3s ease; }
 @keyframes flash { 0% { background: var(--accent); border-color: var(--accent); } 100% { } }
 
-/* Botones grandes del panel de partido en vivo: pensados para acertar
-   con el pulgar sin tener que mirar la pantalla. */
+/* Botones del panel de partido en vivo: compactos para que quepan
+   todos en pantalla sin hacer scroll tras elegir jugador, pero sin
+   bajar del tamaño mínimo cómodo para tocar con el pulgar (44px). */
 .statbtn-lg {
-  min-height: 76px;
-  border-radius: var(--radius-l);
-  padding: 16px 8px;
+  min-height: 44px;
+  border-radius: var(--radius-s);
+  padding: 6px 8px;
+  gap: 0;
 }
-.statbtn-lg .lbl { font-size: 16px; }
-.statbtn-lg .cnt { font-size: 12.5px; }
+.statbtn-lg .lbl { font-size: 13px; }
+.statbtn-lg .cnt { font-size: 11px; }
 
 /* Botón flotante de "deshacer": siempre accesible con el pulgar,
    sin tener que buscarlo entre el resto de controles. */

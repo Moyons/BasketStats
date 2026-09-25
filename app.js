@@ -640,7 +640,6 @@
             opponent: opponent || "Rival",
             date: dateInput.value || new Date().toISOString().slice(0, 10),
             status: "live",
-            quarter: 1,
             oppScore: null,
             events: [],
             rosterIds: [],
@@ -674,16 +673,16 @@
     const them = game.oppScore || 0;
     const isFinal = game.status === "final";
 
+    // Cabecera mínima: el nombre del rival y el marcador ya se ven en la
+    // barra fija de abajo, así que aquí no los repetimos — solo lo
+    // imprescindible para volver atrás o abrir el menú del partido.
     const gameHead = el(`
-      <div class="pagehead">
+      <div class="pagehead" style="margin-bottom:2px">
         <div class="pagehead-left">
-          <button class="iconbtn" id="back-btn"><svg viewBox="0 0 24 24">${ICONS.back}</svg></button>
-          <div>
-            <div class="sub">vs ${esc(game.opponent)}</div>
-            <h1 style="font-size:24px">${esc(DB.team.name)}</h1>
-          </div>
+          <button class="iconbtn iconbtn-sm" id="back-btn"><svg viewBox="0 0 24 24">${ICONS.back}</svg></button>
+          <h1 style="font-size:17px">${esc(DB.team.name)}</h1>
         </div>
-        <button class="iconbtn" id="game-menu-btn"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+        <button class="iconbtn iconbtn-sm" id="game-menu-btn"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
       </div>
     `);
     view.appendChild(gameHead);
@@ -692,27 +691,16 @@
     // Cabecera fija (puntos + selector de jugador): se queda pegada
     // arriba al hacer scroll para que nunca haga falta buscarla. No
     // mostramos el marcador del rival durante el partido — solo importa
-    // al finalizar, y ahí se puede añadir si se quiere.
+    // al finalizar, y ahí se puede añadir si se quiere. Sin periodos:
+    // "Finalizar partido" es un botón directo, de un solo toque.
     const sticky = el(`
       <div class="live-sticky">
         <div class="mini-score">
           <span class="mini-us tabular">${us}</span>
           <span class="mini-us-label">PTS</span>
           <span class="mini-vs">vs ${esc(game.opponent)}</span>
-          <span class="mini-q">${isFinal ? "FINAL" : "Q" + (game.quarter || 1)}</span>
-          ${!isFinal ? `<button type="button" class="mini-expand" id="score-expand-btn">Periodo <svg viewBox="0 0 24 24">${ICONS.down}</svg></button>` : ""}
+          ${isFinal ? `<span class="mini-q">FINAL</span>` : `<button type="button" class="mini-finish-btn" id="finish-game-btn">Finalizar partido</button>`}
         </div>
-        ${!isFinal ? `
-        <div class="rival-quarter-panel" id="rival-quarter-panel" hidden>
-          <div class="quarter-row" style="margin-top:0">
-            <span class="hint">Periodo</span>
-            <div class="seg" style="width:auto" id="quarter-seg">
-              ${[1,2,3,4].map(q => `<button type="button" data-q="${q}" class="${(game.quarter||1)===q?'active':''}">Q${q}</button>`).join("")}
-              <button type="button" data-q="5" class="${(game.quarter||1)===5?'active':''}">PR</button>
-            </div>
-          </div>
-          <button type="button" class="btn btn-primary btn-block" id="finish-game-btn" style="margin-top:14px">Finalizar partido</button>
-        </div>` : ""}
         <div class="roster-row">
           <span class="hint" id="roster-count"></span>
           ${!isFinal ? `<button type="button" class="roster-edit-btn" id="roster-edit-btn"><svg viewBox="0 0 24 24">${ICONS.team}</svg>Convocatoria</button>` : ""}
@@ -723,20 +711,6 @@
     view.appendChild(sticky);
 
     if (!isFinal) {
-      sticky.querySelector("#score-expand-btn").addEventListener("click", () => {
-        const panel = sticky.querySelector("#rival-quarter-panel");
-        const btn = sticky.querySelector("#score-expand-btn");
-        const willShow = panel.hasAttribute("hidden");
-        if (willShow) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", "");
-        btn.classList.toggle("open", willShow);
-      });
-      sticky.querySelectorAll("#quarter-seg button").forEach(b => {
-        b.addEventListener("click", () => requireAdmin(() => {
-          game.quarter = parseInt(b.dataset.q, 10);
-          saveDB();
-          renderView();
-        }));
-      });
       sticky.querySelector("#finish-game-btn").addEventListener("click", () => requireAdmin(() => openFinishGameSheet(game)));
     }
 
@@ -987,7 +961,7 @@
     pad.appendChild(shotGroup);
 
     // Otras estadísticas: 2 columnas, botones grandes (fáciles de acertar sin mirar).
-    const simpleGroup = el(`<div class="statgroup"><div class="statgroup-label">Otras estadísticas</div><div class="statgrid statgrid-2" id="simple-grid"></div></div>`);
+    const simpleGroup = el(`<div class="statgroup"><div class="statgroup-label">Otras estadísticas</div><div class="statgrid" id="simple-grid"></div></div>`);
     SIMPLE_TYPES.forEach(t => {
       const count = s[t.key] !== undefined ? s[t.key] : events.filter(e => e.type === t.key).length;
       const isFoul = t.key === "foul";
@@ -1008,7 +982,7 @@
           return;
         }
         const made = btn.dataset.made === undefined ? undefined : btn.dataset.made === "1";
-        const ev = { id: uid(), playerId: player.id, type, made: made === undefined ? undefined : made, ts: Date.now(), quarter: game.quarter || 1 };
+        const ev = { id: uid(), playerId: player.id, type, made: made === undefined ? undefined : made, ts: Date.now() };
         game.events.push(ev);
         saveDB();
         if (type === "foul" && s.foul + 1 >= FOUL_LIMIT) {
@@ -1115,7 +1089,7 @@
       const row = el(`
         <div class="event-item">
           <div class="ic" style="color:${isShot ? (ev.made ? "var(--good)" : "var(--critical)") : "var(--text-secondary)"}">${iconTxt}</div>
-          <div class="tx"><b>${esc(describeEvent(ev))}</b> · Q${ev.quarter || 1}</div>
+          <div class="tx"><b>${esc(describeEvent(ev))}</b></div>
           ${editable ? `<div class="del" data-evid="${ev.id}"><svg viewBox="0 0 24 24">${ICONS.trash}</svg></div>` : ""}
         </div>
       `);
