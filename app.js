@@ -197,9 +197,25 @@
     return toHex(digest);
   }
   function isAdminConfigured() { return !!(DB.admin && DB.admin.hash); }
-  function isUnlocked() { return !isAdminConfigured() || localStorage.getItem(UNLOCK_KEY) === "1"; }
-  function unlockAdmin() { localStorage.setItem(UNLOCK_KEY, "1"); }
-  function lockAdmin() { localStorage.removeItem(UNLOCK_KEY); }
+  // El desbloqueo se guarda en localStorage Y en una cookie de un año: algunos
+  // navegadores (sobre todo iPhone) borran el almacenamiento de la web si
+  // no se entra durante un tiempo, y con la cookie suele sobrevivir.
+  const UNLOCK_COOKIE = "bs_unlocked=1";
+  function hasUnlockCookie() { return document.cookie.split("; ").includes(UNLOCK_COOKIE); }
+  function isUnlocked() {
+    if (!isAdminConfigured()) return true;
+    let ls = false;
+    try { ls = localStorage.getItem(UNLOCK_KEY) === "1"; } catch (e) {}
+    return ls || hasUnlockCookie();
+  }
+  function unlockAdmin() {
+    try { localStorage.setItem(UNLOCK_KEY, "1"); } catch (e) {}
+    document.cookie = UNLOCK_COOKIE + "; path=/; max-age=31536000; SameSite=Lax";
+  }
+  function lockAdmin() {
+    try { localStorage.removeItem(UNLOCK_KEY); } catch (e) {}
+    document.cookie = "bs_unlocked=; path=/; max-age=0; SameSite=Lax";
+  }
   async function checkPassword(pass) {
     if (!isAdminConfigured()) return true;
     return (await hashPassword(pass || "", DB.admin.salt)) === DB.admin.hash;
