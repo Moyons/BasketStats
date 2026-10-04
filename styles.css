@@ -820,3 +820,41 @@ table.stats-table td.neg { color: var(--critical); }
 /* +/- compacto en una línea dentro de la cabecera del jugador */
 .pm-box { flex-direction: row; gap: 6px; align-items: center; }
 .pm-box input { width: 54px; margin-top: 0; font-size: 18px; padding: 2px 4px; }
+
+/* Resumen del partido en tarjetas (una por jugador) */
+.sum-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.sum-card:active { background: var(--surface-2); }
+.sum-card.team { cursor: default; border-color: var(--border-strong); }
+.sum-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sum-head .num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface-3); border: 1px solid var(--border-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-family: "Barlow Condensed", sans-serif; font-size: 13px; flex-shrink: 0;
+}
+.sum-head .nm { font-weight: 700; font-size: 14.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sum-badges { display: flex; gap: 6px; flex-shrink: 0; }
+.badge-val {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 48px; padding: 3px 6px;
+  border-radius: var(--radius-s);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 800; font-size: 17px; line-height: 1.05;
+}
+.badge-val small { font-family: "Inter", sans-serif; font-size: 9.5px; font-weight: 700; letter-spacing: .05em; color: var(--text-muted); }
+.badge-val.neg { color: var(--critical); background: rgba(230,103,103,0.14); }
+.stat-tiles.sm { gap: 6px; }
+.stat-tiles.sm .stat-tile { padding: 8px 4px; }
+.stat-tiles.sm .stat-tile .v { font-size: 20px; }
+.stat-tiles.sm .stat-tile .k { font-size: 9.5px; }
+.sum-card .pct-line { margin-top: 8px; font-size: 12px; }
+.sum-card .pct-line b { font-size: 16px; }

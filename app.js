@@ -303,6 +303,7 @@
     { key: "blk", label: "Tapón", short: "BLK" },
     { key: "tov", label: "Pérdida", short: "PER" },
     { key: "foul", label: "Falta", short: "FAL" },
+    { key: "fouled", label: "Falta recibida", short: "FR" },
   ];
   const FOUL_LIMIT = 5; // se elimina al llegar a 5 faltas personales
 
@@ -317,7 +318,7 @@
   function aggregate(events) {
     const s = {
       pts: 0, ftm: 0, fta: 0, p2m: 0, p2a: 0, p3m: 0, p3a: 0,
-      oreb: 0, dreb: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0, foul: 0,
+      oreb: 0, dreb: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0, foul: 0, fouled: 0,
       gp: 0,
     };
     for (const ev of events) {
@@ -331,6 +332,7 @@
       else if (ev.type === "blk") s.blk++;
       else if (ev.type === "tov") s.tov++;
       else if (ev.type === "foul") s.foul++;
+      else if (ev.type === "fouled") s.fouled++;
     }
     s.fgm = s.p2m + s.p3m;
     s.fga = s.p2a + s.p3a;
@@ -342,11 +344,12 @@
   function pctStr(m, a) { const p = pct(m, a); return p === null ? "—" : p + "%"; }
   function avg(total, games) { return games > 0 ? total / games : 0; }
 
-  // Valoración: lo que suma el jugador menos lo que resta (tiros
-  // fallados y pérdidas). Las faltas recibidas no se registran, así que
-  // no entran.
+  // Valoración (fórmula habitual de liga, tipo ACB/PIR): suma lo positivo
+  // y resta lo negativo. Faltas recibidas no se registran en la app, así
+  // que no entran; el resto sí.
   function valoracion(s) {
-    return s.pts + s.reb + s.ast + s.stl + s.blk - (s.fga - s.fgm) - (s.fta - s.ftm) - s.tov;
+    return s.pts + s.reb + s.ast + s.stl + s.blk + s.fouled
+      - (s.fga - s.fgm) - (s.fta - s.ftm) - s.tov - s.foul;
   }
 
   // +/- oficial del jugador en un partido (lo introduce el admin cuando
@@ -903,65 +906,56 @@
       return;
     }
 
-    rows.sort((a, b) => b.s.pts - a.s.pts);
-    // Cada porcentaje lleva debajo los aciertos/intentos, para que se vea
-    // de dónde sale.
-    const pctCell = (m, a) => `${pctStr(m, a)}<small>${m}/${a}</small>`;
-    const sum = (k) => rows.reduce((a, r) => a + r.s[k], 0);
+    rows.sort((a, b) => valoracion(b.s) - valoracion(a.s));
     const teamS = aggregate(rows.flatMap(r => playerEventsInGame(game, r.player.id)));
-    const table = el(`
-      <div class="table-wrap">
-      <table class="stats-table">
-        <thead>
-          <tr>
-            <th>Jugador</th><th>VAL</th><th>+/-</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>FAL</th><th>TC</th><th>3P</th><th>TL</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r => `
-            <tr data-pid="${r.player.id}">
-              <td>${esc(shortName(r.player.name))}</td>
-              <td class="${valoracion(r.s) < 0 ? "neg" : ""}">${valoracion(r.s)}</td>
-              <td>${fmtSigned(gamePM(game, r.player.id))}</td>
-              <td>${r.s.pts}</td>
-              <td>${r.s.reb}</td>
-              <td>${r.s.ast}</td>
-              <td>${r.s.stl}</td>
-              <td>${r.s.blk}</td>
-              <td>${r.s.tov}</td>
-              <td>${r.s.foul}${r.s.foul >= 5 ? " ⚠" : ""}</td>
-              <td class="pct">${pctCell(r.s.fgm, r.s.fga)}</td>
-              <td class="pct">${pctCell(r.s.p3m, r.s.p3a)}</td>
-              <td class="pct">${pctCell(r.s.ftm, r.s.fta)}</td>
-            </tr>
-          `).join("")}
-          <tr class="totals-row">
-            <td>Equipo</td>
-            <td></td>
-            <td></td>
-            <td>${sum("pts")}</td>
-            <td>${sum("reb")}</td>
-            <td>${sum("ast")}</td>
-            <td>${sum("stl")}</td>
-            <td>${sum("blk")}</td>
-            <td>${sum("tov")}</td>
-            <td>${sum("foul")}</td>
-            <td class="pct">${pctCell(teamS.fgm, teamS.fga)}</td>
-            <td class="pct">${pctCell(teamS.p3m, teamS.p3a)}</td>
-            <td class="pct">${pctCell(teamS.ftm, teamS.fta)}</td>
-          </tr>
-        </tbody>
-      </table>
-      </div>
-    `);
-    table.querySelectorAll("tbody tr[data-pid]").forEach(tr => {
-      tr.addEventListener("click", () => {
-        liveSelectedPlayer[game.id] = tr.dataset.pid;
+
+    // Un bloque por jugador (en móvil no cabe una tabla de 13 columnas):
+    // VAL y +/- arriba, estadísticas en rejilla y los % con aciertos/intentos.
+    const pctLine = (s) => `
+      <div class="pct-line">
+        <span>TC <b>${pctStr(s.fgm, s.fga)}</b> <small>${s.fgm}/${s.fga}</small></span>
+        <span>3P <b>${pctStr(s.p3m, s.p3a)}</b> <small>${s.p3m}/${s.p3a}</small></span>
+        <span>TL <b>${pctStr(s.ftm, s.fta)}</b> <small>${s.ftm}/${s.fta}</small></span>
+      </div>`;
+    const statRow = (s) => `
+      <div class="stat-tiles sm">
+        ${statTile(s.pts, "PTS")}${statTile(s.reb, "REB")}${statTile(s.ast, "AST")}${statTile(s.stl, "ROB")}
+        ${statTile(s.blk, "TAP")}${statTile(s.tov, "PÉR")}${statTile(s.foul + (s.foul >= FOUL_LIMIT ? " ⚠" : ""), "FAL")}${statTile(s.fouled, "FR")}
+      </div>`;
+
+    const cards = rows.map(r => {
+      const v = valoracion(r.s);
+      const pm = gamePM(game, r.player.id);
+      return el(`
+        <div class="sum-card" data-pid="${r.player.id}">
+          <div class="sum-head">
+            <div class="num">${esc(r.player.number ?? "")}</div>
+            <div class="nm">${esc(r.player.name)}</div>
+            <div class="sum-badges">
+              <span class="badge-val ${v < 0 ? "neg" : ""}"><small>VAL</small>${v}</span>
+              <span class="badge-val"><small>+/-</small>${fmtSigned(pm)}</span>
+            </div>
+          </div>
+          ${statRow(r.s)}
+          ${pctLine(r.s)}
+        </div>`);
+    });
+
+    view.appendChild(el(`<div class="section-title">Resumen del partido</div>`));
+    cards.forEach(c => {
+      c.addEventListener("click", () => {
+        liveSelectedPlayer[game.id] = c.dataset.pid;
         location.hash = location.hash; render();
       });
+      view.appendChild(c);
     });
-    view.appendChild(table);
-    view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL = puntos + rebotes + asistencias + robos + tapones − tiros fallados − pérdidas. Toca un jugador para ver su detalle jugada a jugada.</p>`));
+    view.appendChild(el(`
+      <div class="sum-card team">
+        <div class="sum-head"><div class="nm">Equipo</div></div>
+        ${statRow(teamS)}
+        ${pctLine(teamS)}
+      </div>`));
+    view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL = puntos + rebotes + asistencias + robos + tapones + faltas recibidas − tiros fallados − pérdidas − faltas cometidas. Toca un jugador para ver su detalle.</p>`));
   }
 
   function shortName(name) {
