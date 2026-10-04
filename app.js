@@ -42,6 +42,8 @@
     db.players = asArray(db.players);
     db.games = asArray(db.games).map(g => {
       g.events = asArray(g.events);
+      // Un objeto vacío también desaparece en Firebase, así que lo rehacemos.
+      g.pm = g.pm && typeof g.pm === "object" ? g.pm : {};
       return g;
     });
     if (!db.team) db.team = { name: "Mi Equipo" };
@@ -339,6 +341,33 @@
   function pct(m, a) { return a > 0 ? Math.round((m / a) * 100) : null; }
   function pctStr(m, a) { const p = pct(m, a); return p === null ? "—" : p + "%"; }
   function avg(total, games) { return games > 0 ? total / games : 0; }
+
+  // Valoración: lo que suma el jugador menos lo que resta (tiros
+  // fallados y pérdidas). Las faltas recibidas no se registran, así que
+  // no entran.
+  function valoracion(s) {
+    return s.pts + s.reb + s.ast + s.stl + s.blk - (s.fga - s.fgm) - (s.fta - s.ftm) - s.tov;
+  }
+
+  // +/- oficial del jugador en un partido (lo introduce el admin cuando
+  // lo publica la web). null = todavía no introducido.
+  function gamePM(game, pid) {
+    const v = game.pm && game.pm[pid];
+    return typeof v === "number" ? v : null;
+  }
+  function fmtSigned(n) {
+    if (n === null || n === undefined) return "—";
+    return n > 0 ? "+" + n : String(n);
+  }
+  function seasonPM(playerId, { finishedOnly = false } = {}) {
+    let total = 0, n = 0;
+    for (const g of DB.games) {
+      if (finishedOnly && g.status !== "final") continue;
+      const v = gamePM(g, playerId);
+      if (v !== null) { total += v; n++; }
+    }
+    return n ? total : null;
+  }
   function fmtAvg(n) {
     if (!isFinite(n)) return "0.0";
     return n.toFixed(1);
@@ -865,7 +894,7 @@
   function renderGameSummary(view, game, roster) {
     const rows = roster
       .map(p => ({ player: p, s: aggregate(playerEventsInGame(game, p.id)) }))
-      .filter(r => r.s.pts + r.s.reb + r.s.ast + r.s.stl + r.s.blk + r.s.tov + r.s.foul + r.s.fga + r.s.fta > 0);
+      .filter(r => r.s.pts + r.s.reb + r.s.ast + r.s.stl + r.s.blk + r.s.tov + r.s.foul + r.s.fga + r.s.fta > 0 || gamePM(game, r.player.id) !== null);
 
     view.appendChild(el(`<div class="section-title">Resumen del partido</div>`));
 
@@ -875,18 +904,25 @@
     }
 
     rows.sort((a, b) => b.s.pts - a.s.pts);
-    const wrap = el(`<div class="table-wrap"></div>`);
+    // Cada porcentaje lleva debajo los aciertos/intentos, para que se vea
+    // de dónde sale.
+    const pctCell = (m, a) => `${pctStr(m, a)}<small>${m}/${a}</small>`;
+    const sum = (k) => rows.reduce((a, r) => a + r.s[k], 0);
+    const teamS = aggregate(rows.flatMap(r => playerEventsInGame(game, r.player.id)));
     const table = el(`
+      <div class="table-wrap">
       <table class="stats-table">
         <thead>
           <tr>
-            <th>Jugador</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>FAL</th><th>TC</th><th>3P</th><th>TL</th>
+            <th>Jugador</th><th>VAL</th><th>+/-</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>FAL</th><th>TC</th><th>3P</th><th>TL</th>
           </tr>
         </thead>
         <tbody>
           ${rows.map(r => `
             <tr data-pid="${r.player.id}">
               <td>${esc(shortName(r.player.name))}</td>
+              <td class="${valoracion(r.s) < 0 ? "neg" : ""}">${valoracion(r.s)}</td>
+              <td>${fmtSigned(gamePM(game, r.player.id))}</td>
               <td>${r.s.pts}</td>
               <td>${r.s.reb}</td>
               <td>${r.s.ast}</td>
@@ -894,34 +930,38 @@
               <td>${r.s.blk}</td>
               <td>${r.s.tov}</td>
               <td>${r.s.foul}${r.s.foul >= 5 ? " ⚠" : ""}</td>
-              <td>${r.s.p2m + r.s.p3m}/${r.s.p2a + r.s.p3a}</td>
-              <td>${r.s.p3m}/${r.s.p3a}</td>
-              <td>${r.s.ftm}/${r.s.fta}</td>
+              <td class="pct">${pctCell(r.s.fgm, r.s.fga)}</td>
+              <td class="pct">${pctCell(r.s.p3m, r.s.p3a)}</td>
+              <td class="pct">${pctCell(r.s.ftm, r.s.fta)}</td>
             </tr>
           `).join("")}
           <tr class="totals-row">
-            <td>Total</td>
-            <td>${rows.reduce((a, r) => a + r.s.pts, 0)}</td>
-            <td>${rows.reduce((a, r) => a + r.s.reb, 0)}</td>
-            <td>${rows.reduce((a, r) => a + r.s.ast, 0)}</td>
-            <td>${rows.reduce((a, r) => a + r.s.stl, 0)}</td>
-            <td>${rows.reduce((a, r) => a + r.s.blk, 0)}</td>
-            <td>${rows.reduce((a, r) => a + r.s.tov, 0)}</td>
-            <td>${rows.reduce((a, r) => a + r.s.foul, 0)}</td>
-            <td colspan="3"></td>
+            <td>Equipo</td>
+            <td></td>
+            <td></td>
+            <td>${sum("pts")}</td>
+            <td>${sum("reb")}</td>
+            <td>${sum("ast")}</td>
+            <td>${sum("stl")}</td>
+            <td>${sum("blk")}</td>
+            <td>${sum("tov")}</td>
+            <td>${sum("foul")}</td>
+            <td class="pct">${pctCell(teamS.fgm, teamS.fga)}</td>
+            <td class="pct">${pctCell(teamS.p3m, teamS.p3a)}</td>
+            <td class="pct">${pctCell(teamS.ftm, teamS.fta)}</td>
           </tr>
         </tbody>
       </table>
+      </div>
     `);
-    wrap.appendChild(table);
     table.querySelectorAll("tbody tr[data-pid]").forEach(tr => {
       tr.addEventListener("click", () => {
         liveSelectedPlayer[game.id] = tr.dataset.pid;
         location.hash = location.hash; render();
       });
     });
-    view.appendChild(wrap);
-    view.appendChild(el(`<p class="hint" style="margin-top:10px">Toca un jugador (arriba o en la tabla) para ver su detalle jugada a jugada.</p>`));
+    view.appendChild(table);
+    view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL = puntos + rebotes + asistencias + robos + tapones − tiros fallados − pérdidas. Toca un jugador para ver su detalle jugada a jugada.</p>`));
   }
 
   function shortName(name) {
@@ -938,13 +978,25 @@
     const head = el(`
       <div class="statpad-head">
         <div class="num">${esc(player.number ?? "")}</div>
-        <div>
+        <div style="flex:1;min-width:0">
           <div class="name">${esc(player.name)}</div>
-          <div class="line">${s.pts} PTS · ${s.reb} REB · ${s.ast} AST · ${pctStr(s.fgm, s.fga)} TC</div>
+          <div class="line">${s.pts} PTS · ${s.reb} REB · ${s.ast} AST · ${pctStr(s.fgm, s.fga)} TC · VAL ${valoracion(s)}</div>
         </div>
+        <label class="pm-box">
+          <span>+/-</span>
+          <input type="number" inputmode="numeric" id="pm-input" placeholder="—" value="${gamePM(game, player.id) ?? ""}">
+        </label>
       </div>
     `);
     view.appendChild(head);
+    head.querySelector("#pm-input").addEventListener("change", (e) => {
+      const v = e.target.value.trim();
+      game.pm = game.pm || {};
+      if (v === "") delete game.pm[player.id];
+      else game.pm[player.id] = Math.max(-60, Math.min(60, parseInt(v, 10) || 0));
+      saveDB();
+      location.hash = location.hash; render();
+    });
 
     const pad = el(`<div></div>`);
 
@@ -1040,6 +1092,15 @@
         ${statTile(s.stl, "ROB")}
         ${statTile(s.blk, "TAP")}
         ${statTile(s.tov, "PÉR")}
+        ${statTile(fmtSigned(gamePM(game, player.id)), "+/-")}
+        ${statTile(valoracion(s), "VAL")}
+      </div>
+    `));
+    view.appendChild(el(`
+      <div class="pct-line">
+        <span>TC <b>${pctStr(s.fgm, s.fga)}</b> <small>${s.fgm}/${s.fga}</small></span>
+        <span>3P <b>${pctStr(s.p3m, s.p3a)}</b> <small>${s.p3m}/${s.p3a}</small></span>
+        <span>TL <b>${pctStr(s.ftm, s.fta)}</b> <small>${s.ftm}/${s.fta}</small></span>
       </div>
     `));
     view.appendChild(el(`<p class="hint" style="margin:14px 2px">${esc(reason)}</p>`));
@@ -1471,7 +1532,7 @@
       <table class="stats-table">
         <thead>
           <tr>
-            <th>Jugador</th><th>PJ</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>TC%</th><th>3P%</th><th>TL%</th>
+            <th>Jugador</th><th>PJ</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>VAL</th><th>+/-</th><th>TC%</th><th>3P%</th><th>TL%</th>
           </tr>
         </thead>
         <tbody>
@@ -1485,6 +1546,8 @@
               <td>${fmtAvg(avg(r.s.stl, r.gp))}</td>
               <td>${fmtAvg(avg(r.s.blk, r.gp))}</td>
               <td>${fmtAvg(avg(r.s.tov, r.gp))}</td>
+              <td>${fmtAvg(avg(valoracion(r.s), r.gp))}</td>
+              <td>${fmtSigned(seasonPM(r.player.id, { finishedOnly: seasonFinishedOnly }))}</td>
               <td>${pctStr(r.s.fgm, r.s.fga)}</td>
               <td>${pctStr(r.s.p3m, r.s.p3a)}</td>
               <td>${pctStr(r.s.ftm, r.s.fta)}</td>

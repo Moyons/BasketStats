@@ -777,3 +777,46 @@ table.stats-table tbody tr.totals-row:active { background: var(--surface-2); }
 .admin-toggle:active { transform: scale(0.96); }
 
 ::-webkit-scrollbar { width: 0; height: 0; }
+
+/* +/- oficial (entrada en el panel de estadísticas) */
+.pm-box {
+  display: flex; flex-direction: column; align-items: center;
+  flex-shrink: 0;
+  font-size: 10.5px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.pm-box input {
+  width: 62px;
+  margin-top: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  color: var(--text-primary);
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  text-align: center;
+  padding: 2px 4px;
+}
+.pm-box input:focus { outline: none; border-color: var(--accent); }
+
+/* Porcentajes del partido con aciertos/intentos debajo */
+table.stats-table td.pct small {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  line-height: 1.2;
+}
+table.stats-table td.neg { color: var(--critical); }
+.pct-line {
+  display: flex; justify-content: space-between; gap: 8px;
+  margin-top: 10px;
+  font-size: 13px; color: var(--text-secondary);
+}
+.pct-line b { color: var(--text-primary); font-family: "Barlow Condensed", sans-serif; font-size: 18px; }
+.pct-line small { color: var(--text-muted); font-size: 11px; }
+
+/* +/- compacto en una línea dentro de la cabecera del jugador */
+.pm-box { flex-direction: row; gap: 6px; align-items: center; }
+.pm-box input { width: 54px; margin-top: 0; font-size: 18px; padding: 2px 4px; }
