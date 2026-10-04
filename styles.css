@@ -858,3 +858,7 @@ table.stats-table td.neg { color: var(--critical); }
 .stat-tiles.sm .stat-tile .k { font-size: 9.5px; }
 .sum-card .pct-line { margin-top: 8px; font-size: 12px; }
 .sum-card .pct-line b { font-size: 16px; }
+
+[hidden] { display: none !important; }
+table.stats-table tbody tr.selected td { background: var(--accent-dim); }
+table.stats-table tbody tr.selected td:first-child { color: var(--accent); }

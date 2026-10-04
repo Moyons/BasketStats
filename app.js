@@ -733,11 +733,11 @@
           <span class="mini-vs">vs ${esc(game.opponent)}</span>
           ${isFinal ? `<span class="mini-q">FINAL</span>` : `<button type="button" class="mini-finish-btn" id="finish-game-btn">Finalizar partido</button>`}
         </div>
-        <div class="roster-row">
+        <div class="roster-row" ${isFinal ? "hidden" : ""}>
           <span class="hint" id="roster-count"></span>
           ${!isFinal ? `<button type="button" class="roster-edit-btn" id="roster-edit-btn"><svg viewBox="0 0 24 24">${ICONS.team}</svg>Convocatoria</button>` : ""}
         </div>
-        <div class="player-strip" id="player-strip"></div>
+        <div class="player-strip" id="player-strip" ${isFinal ? "hidden" : ""}></div>
       </div>
     `);
     view.appendChild(sticky);
@@ -883,6 +883,7 @@
           const v = root.querySelector("#fg-opp").value;
           game.oppScore = v === "" ? null : Math.max(0, parseInt(v, 10) || 0);
           game.status = "final";
+          delete liveSelectedPlayer[game.id]; // al finalizar, la vista pasa a ser la tabla
           saveDB();
           closeModal();
           location.hash = location.hash; render();
@@ -894,10 +895,13 @@
 
   // Resumen del partido finalizado: estadísticas completas de cada
   // convocado que llegó a jugar, para verlo todo de un vistazo.
+  // Resumen del partido finalizado: tabla con todos los convocados que
+  // llegaron a jugar. Al tocar una fila se ve su detalle en grande debajo;
+  // al volver a tocarla se cierra.
   function renderGameSummary(view, game, roster) {
     const rows = roster
       .map(p => ({ player: p, s: aggregate(playerEventsInGame(game, p.id)) }))
-      .filter(r => r.s.pts + r.s.reb + r.s.ast + r.s.stl + r.s.blk + r.s.tov + r.s.foul + r.s.fga + r.s.fta > 0 || gamePM(game, r.player.id) !== null);
+      .filter(r => r.s.pts + r.s.reb + r.s.ast + r.s.stl + r.s.blk + r.s.tov + r.s.foul + r.s.fouled + r.s.fga + r.s.fta > 0 || gamePM(game, r.player.id) !== null);
 
     view.appendChild(el(`<div class="section-title">Resumen del partido</div>`));
 
@@ -907,54 +911,67 @@
     }
 
     rows.sort((a, b) => valoracion(b.s) - valoracion(a.s));
+    const sum = (k) => rows.reduce((a, r) => a + r.s[k], 0);
     const teamS = aggregate(rows.flatMap(r => playerEventsInGame(game, r.player.id)));
+    // Porcentaje con aciertos/intentos debajo.
+    const pc = (m, a) => `${pctStr(m, a)}<small>${m}/${a}</small>`;
+    const selectedId = liveSelectedPlayer[game.id];
 
-    // Un bloque por jugador (en móvil no cabe una tabla de 13 columnas):
-    // VAL y +/- arriba, estadísticas en rejilla y los % con aciertos/intentos.
-    const pctLine = (s) => `
-      <div class="pct-line">
-        <span>TC <b>${pctStr(s.fgm, s.fga)}</b> <small>${s.fgm}/${s.fga}</small></span>
-        <span>3P <b>${pctStr(s.p3m, s.p3a)}</b> <small>${s.p3m}/${s.p3a}</small></span>
-        <span>TL <b>${pctStr(s.ftm, s.fta)}</b> <small>${s.ftm}/${s.fta}</small></span>
-      </div>`;
-    const statRow = (s) => `
-      <div class="stat-tiles sm">
-        ${statTile(s.pts, "PTS")}${statTile(s.reb, "REB")}${statTile(s.ast, "AST")}${statTile(s.stl, "ROB")}
-        ${statTile(s.blk, "TAP")}${statTile(s.tov, "PÉR")}${statTile(s.foul + (s.foul >= FOUL_LIMIT ? " ⚠" : ""), "FAL")}${statTile(s.fouled, "FR")}
-      </div>`;
-
-    const cards = rows.map(r => {
-      const v = valoracion(r.s);
-      const pm = gamePM(game, r.player.id);
-      return el(`
-        <div class="sum-card" data-pid="${r.player.id}">
-          <div class="sum-head">
-            <div class="num">${esc(r.player.number ?? "")}</div>
-            <div class="nm">${esc(r.player.name)}</div>
-            <div class="sum-badges">
-              <span class="badge-val ${v < 0 ? "neg" : ""}"><small>VAL</small>${v}</span>
-              <span class="badge-val"><small>+/-</small>${fmtSigned(pm)}</span>
-            </div>
-          </div>
-          ${statRow(r.s)}
-          ${pctLine(r.s)}
-        </div>`);
-    });
-
-    view.appendChild(el(`<div class="section-title">Resumen del partido</div>`));
-    cards.forEach(c => {
-      c.addEventListener("click", () => {
-        liveSelectedPlayer[game.id] = c.dataset.pid;
+    const table = el(`
+      <div class="table-wrap">
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Jugador</th><th>VAL</th><th>+/-</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>FAL</th><th>FR</th><th>TC</th><th>3P</th><th>TL</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr data-pid="${r.player.id}" class="${selectedId === r.player.id ? "selected" : ""}">
+              <td>${esc(shortName(r.player.name))}</td>
+              <td class="${valoracion(r.s) < 0 ? "neg" : ""}">${valoracion(r.s)}</td>
+              <td>${fmtSigned(gamePM(game, r.player.id))}</td>
+              <td>${r.s.pts}</td>
+              <td>${r.s.reb}</td>
+              <td>${r.s.ast}</td>
+              <td>${r.s.stl}</td>
+              <td>${r.s.blk}</td>
+              <td>${r.s.tov}</td>
+              <td>${r.s.foul}${r.s.foul >= FOUL_LIMIT ? " ⚠" : ""}</td>
+              <td>${r.s.fouled}</td>
+              <td class="pct">${pc(r.s.fgm, r.s.fga)}</td>
+              <td class="pct">${pc(r.s.p3m, r.s.p3a)}</td>
+              <td class="pct">${pc(r.s.ftm, r.s.fta)}</td>
+            </tr>
+          `).join("")}
+          <tr class="totals-row">
+            <td>Equipo</td>
+            <td></td>
+            <td></td>
+            <td>${sum("pts")}</td>
+            <td>${sum("reb")}</td>
+            <td>${sum("ast")}</td>
+            <td>${sum("stl")}</td>
+            <td>${sum("blk")}</td>
+            <td>${sum("tov")}</td>
+            <td>${sum("foul")}</td>
+            <td>${sum("fouled")}</td>
+            <td class="pct">${pc(teamS.fgm, teamS.fga)}</td>
+            <td class="pct">${pc(teamS.p3m, teamS.p3a)}</td>
+            <td class="pct">${pc(teamS.ftm, teamS.fta)}</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    `);
+    table.querySelectorAll("tbody tr[data-pid]").forEach(tr => {
+      tr.addEventListener("click", () => {
+        const pid = tr.dataset.pid;
+        liveSelectedPlayer[game.id] = liveSelectedPlayer[game.id] === pid ? null : pid;
         location.hash = location.hash; render();
       });
-      view.appendChild(c);
     });
-    view.appendChild(el(`
-      <div class="sum-card team">
-        <div class="sum-head"><div class="nm">Equipo</div></div>
-        ${statRow(teamS)}
-        ${pctLine(teamS)}
-      </div>`));
+    view.appendChild(table);
     view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL = puntos + rebotes + asistencias + robos + tapones + faltas recibidas − tiros fallados − pérdidas − faltas cometidas. Toca un jugador para ver su detalle.</p>`));
   }
 
