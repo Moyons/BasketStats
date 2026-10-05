@@ -908,3 +908,16 @@ table.standings th:nth-child(2) { text-align: left; }
   backdrop-filter: none;
 }
 .admin-toggle:not([style*="display: none"]) { display: flex; }
+
+/* Las tablas no pintan fuera de su recuadro (la columna fija del nombre
+   no debe "sangrar" sus colores sobre el fondo de la app) */
+.table-wrap {
+  position: relative;
+  background: var(--surface-1);
+  contain: paint;
+  isolation: isolate;
+  transform: translateZ(0);
+}
+table.stats-table td:first-child, table.stats-table th:first-child { background-clip: padding-box; }
+table.stats-table tbody tr:nth-child(odd) td:first-child { background: var(--surface-1); }
+table.stats-table tbody tr.totals-row td:first-child { background: var(--surface-1); }

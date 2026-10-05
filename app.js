@@ -312,8 +312,7 @@
     { key: "p3", label: "Triple", pts: 3 },
   ];
   const SIMPLE_TYPES = [
-    { key: "oreb", label: "Reb. Of.", short: "RO" },
-    { key: "dreb", label: "Reb. Def.", short: "RD" },
+    { key: "reb", label: "Rebote", short: "REB" },
     { key: "ast", label: "Asist.", short: "AST" },
     { key: "stl", label: "Robo", short: "STL" },
     { key: "blk", label: "Tapón", short: "BLK" },
@@ -341,8 +340,8 @@
       if (ev.type === "ft") { s.fta++; if (ev.made) { s.ftm++; s.pts += 1; } }
       else if (ev.type === "p2") { s.p2a++; if (ev.made) { s.p2m++; s.pts += 2; } }
       else if (ev.type === "p3") { s.p3a++; if (ev.made) { s.p3m++; s.pts += 3; } }
-      else if (ev.type === "oreb") { s.oreb++; s.reb++; }
-      else if (ev.type === "dreb") { s.dreb++; s.reb++; }
+      // "oreb"/"dreb" son eventos antiguos: todos cuentan como rebote.
+      else if (ev.type === "reb" || ev.type === "oreb" || ev.type === "dreb") s.reb++;
       else if (ev.type === "ast") s.ast++;
       else if (ev.type === "stl") s.stl++;
       else if (ev.type === "blk") s.blk++;
@@ -473,7 +472,8 @@
     let tab = "home";
     if (path.startsWith("/season")) tab = "season";
     else if (path.startsWith("/calendario")) tab = "calendario";
-    else if (path.startsWith("/equipo") || path.startsWith("/roster") || path.startsWith("/calendario") || path.startsWith("/player")) tab = "equipo";
+    else if (path.startsWith("/liga") || path.startsWith("/equipo") || path.startsWith("/calendario")) tab = "liga";
+    else if (path.startsWith("/roster") || path.startsWith("/player")) tab = "roster";
     else if (path.startsWith("/settings")) tab = "settings";
     document.querySelectorAll("#tabbar a").forEach(a => {
       a.classList.toggle("active", a.dataset.tab === tab);
@@ -713,40 +713,45 @@
   }
 
   /* ---------------------------------------------------------
-     VIEW: Equipo (liga, nuestros partidos y plantilla)
+     VIEW: Liga (clasificación, calendario de liga y próximo partido)
      --------------------------------------------------------- */
-  route("/equipo", (view) => {
+  route("/liga", (view) => {
     view.appendChild(el(`
       <div class="pagehead">
         <div>
-          <h1>Equipo</h1>
+          <h1>Liga</h1>
           <div class="sub">${esc(DB.team.name)}</div>
         </div>
       </div>
     `));
-
     const liga = el(`<div></div>`);
     view.appendChild(liga);
     renderLiga(liga);
+  });
+  route("/equipo", () => { location.replace("#/liga"); });
+  route("/calendario", () => { location.replace("#/liga"); });
 
-    view.appendChild(el(`<div class="section-title">Partidos registrados en la app</div>`));
-    const games = [...DB.games].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    if (games.length === 0) {
-      view.appendChild(el(`<p class="hint" style="margin-top:2px">Todavía no hay partidos. Créalos desde la pestaña Partidos.</p>`));
-    } else {
-      const wrap = el(`<div></div>`);
-      games.forEach(g => wrap.appendChild(gameCard(g)));
-      view.appendChild(wrap);
-    }
-
-    view.appendChild(el(`<div class="section-title">Plantilla (${DB.players.length})</div>`));
-    const addRow = el(`<div style="display:flex;justify-content:flex-end;margin:-4px 0 8px"><button class="btn btn-ghost btn-sm" id="equipo-add">+ Añadir jugador</button></div>`);
-    view.appendChild(addRow);
-    addRow.querySelector("#equipo-add").addEventListener("click", () => requireAdmin(() => openPlayerForm()));
+  /* ---------------------------------------------------------
+     VIEW: Plantilla (jugadores; al tocar uno se ven sus estadísticas)
+     --------------------------------------------------------- */
+  route("/roster", (view) => {
+    view.appendChild(el(`
+      <div class="pagehead">
+        <div>
+          <h1>Plantilla</h1>
+          <div class="sub">${DB.players.length} jugador${DB.players.length === 1 ? "" : "es"}</div>
+        </div>
+        <button class="iconbtn" id="add-player-btn"><svg viewBox="0 0 24 24">${ICONS.plus}</svg></button>
+      </div>
+    `));
+    view.querySelector("#add-player-btn").addEventListener("click", () => requireAdmin(() => openPlayerForm()));
 
     const sorted = [...DB.players].sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
+    if (sorted.length === 0) {
+      view.appendChild(el(emptyState(ICONS.team, "Sin jugadores", "Añade a los jugadores de tu equipo para empezar.")));
+      return;
+    }
     const card = el(`<div class="card"></div>`);
-    if (sorted.length === 0) card.innerHTML = `<p class="hint">Todavía no hay jugadores.</p>`;
     sorted.forEach(p => card.appendChild(el(`
       <a class="roster-item" href="#/player/${p.id}">
         <div class="num">${esc(p.number ?? "")}</div>
@@ -759,9 +764,6 @@
     view.appendChild(card);
   });
 
-  // Rutas antiguas: ahora viven dentro de Equipo.
-  route("/roster", () => { location.replace("#/equipo"); });
-  route("/calendario", () => { location.replace("#/equipo"); });
 
   // "MORATALAZ P3c/ VALDEBERNARDO, 2 28030, Madrid" -> pista y calle en dos líneas
   function formatCampo(campo) {
@@ -1476,7 +1478,7 @@
         ${statTile(pctStr(s.fgm, s.fga), "TC%")}
         ${statTile(pctStr(s.p3m, s.p3a), "3P%")}
         ${statTile(pctStr(s.ftm, s.fta), "TL%")}
-        ${statTile(s.oreb + "/" + s.dreb, "REB O/D")}
+        ${statTile(s.reb, "REB")}
         ${statTile(s.foul, "FALTAS")}
       </div>
     </div>`);
