@@ -1,4 +1,4 @@
-const CACHE = "basketstats-v3";
+const CACHE = "basketstats-v4";
 const ASSETS = [
   "./",
   "./index.html",

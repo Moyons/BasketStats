@@ -1888,8 +1888,19 @@
 
   // Register service worker for installable/offline PWA (best-effort).
   if ("serviceWorker" in navigator) {
+    // Cada vez que se abre la app (y al volver a ella) se busca una versión
+    // nueva. Cuando la encuentra, se recarga sola para mostrarla.
+    let recargando = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (recargando) return;
+      recargando = true;
+      location.reload();
+    });
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
+        reg.update();
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update(); });
+      }).catch(() => {});
     });
   }
 })();
