@@ -1,8 +1,11 @@
-name: Calendario semanal
+name: Calendario y clasificación
 
 on:
   schedule:
-    - cron: "0 7 * * 1"   # cada lunes a las 07:00 UTC
+    # Viernes y domingo. Madrid es UTC+1 en invierno y UTC+2 en verano,
+    # así que se programan las dos horas y el paso "Comprobar hora" deja
+    # pasar solo la que cae a las 16:00 de Madrid.
+    - cron: "0 14,15 * * 5,0"
   workflow_dispatch:       # también se puede lanzar a mano desde la pestaña Actions
 
 permissions:
@@ -12,22 +15,39 @@ jobs:
   actualizar:
     runs-on: ubuntu-latest
     steps:
+      - name: Comprobar hora (Madrid)
+        id: hora
+        run: |
+          H=$(TZ=Europe/Madrid date +%H)
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ] && [ "$H" != "16" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Son las ${H}:00 en Madrid: no toca ahora"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.hora.outputs.run == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.hora.outputs.run == 'true'
         with:
           node-version: 20
 
       - name: Instalar dependencias
+        if: steps.hora.outputs.run == 'true'
         run: npm install
 
       - name: Instalar navegador para el scraper
+        if: steps.hora.outputs.run == 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Extraer calendario de la FBM
+      - name: Extraer calendario y clasificación de la FBM
+        if: steps.hora.outputs.run == 'true'
         run: npm run calendario
 
       - name: Guardar calendario.json si ha cambiado
+        if: steps.hora.outputs.run == 'true'
         run: |
           git config user.name "calendario-bot"
           git config user.email "actions@users.noreply.github.com"
@@ -35,11 +55,12 @@ jobs:
           if git diff --cached --quiet; then
             echo "Sin cambios en el calendario"
           else
-            git commit -m "Actualiza calendario"
+            git commit -m "Actualiza calendario y clasificación"
             git push
           fi
 
       - name: Publicar la app en Surge
+        if: steps.hora.outputs.run == 'true'
         env:
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
         run: |
