@@ -725,7 +725,7 @@ table.stats-table tbody tr.totals-row { font-weight: 800; border-top: 2px solid 
 table.stats-table tbody tr.totals-row td:first-child { background: var(--surface-2); color: var(--text-primary); }
 table.stats-table tbody tr.totals-row:active { background: var(--surface-2); }
 
-.pill-toggle { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 4px; }
+.pill-toggle { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 16px; }
 .pill-toggle button {
   flex-shrink: 0;
   border: 1px solid var(--border-strong);
