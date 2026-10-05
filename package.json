@@ -1,0 +1,11 @@
+{
+  "name": "basketstats",
+  "private": true,
+  "description": "App de estadísticas de baloncesto (sin build). Este package.json solo sirve para el scraper del calendario.",
+  "scripts": {
+    "calendario": "node scripts/scrape-calendario.js"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}

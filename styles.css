@@ -862,3 +862,27 @@ table.stats-table td.neg { color: var(--critical); }
 [hidden] { display: none !important; }
 table.stats-table tbody tr.selected td { background: var(--accent-dim); }
 table.stats-table tbody tr.selected td:first-child { color: var(--accent); }
+
+/* Calendario */
+.next-match { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-dim), var(--shadow-card); }
+.cal-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--border);
+}
+.cal-row:last-child { border-bottom: none; }
+.cal-row.played .cal-rival, .cal-row.played .cal-date { opacity: .65; }
+.cal-date { width: 74px; flex-shrink: 0; font-size: 13px; }
+.cal-date b { display: block; text-transform: capitalize; color: var(--text-primary); }
+.cal-date small { color: var(--text-muted); font-size: 12px; font-weight: 600; }
+.cal-main { flex: 1; min-width: 0; }
+.cal-rival { font-size: 14.5px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-rival b { color: var(--text-primary); }
+.cal-campo { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-res { flex-shrink: 0; }
+.res {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 16px;
+  padding: 3px 8px; border-radius: var(--radius-s);
+}
+.res.win { color: var(--good); background: rgba(12,163,12,0.12); }
+.res.lose { color: var(--critical); background: rgba(230,103,103,0.12); }

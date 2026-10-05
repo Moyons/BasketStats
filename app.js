@@ -527,6 +527,7 @@
     undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/>',
     chevron: '<path d="M9 6l6 6-6 6"/>',
     back: '<path d="M19 12H5M11 5l-6 7 6 7"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
     check: '<path d="M5 13l4 4L19 7"/>',
     down: '<path d="M6 9l6 6 6-6"/>',
@@ -602,7 +603,10 @@
           <h1>${esc(DB.team.name)}</h1>
           <div class="sub">${games.length} partido${games.length === 1 ? "" : "s"} registrado${games.length === 1 ? "" : "s"}</div>
         </div>
-        <button class="iconbtn" id="new-game-btn"><svg viewBox="0 0 24 24">${ICONS.plus}</svg></button>
+        <div style="display:flex;gap:8px">
+          <button class="iconbtn" id="calendar-btn" aria-label="Calendario"><svg viewBox="0 0 24 24">${ICONS.calendar}</svg></button>
+          <button class="iconbtn" id="new-game-btn"><svg viewBox="0 0 24 24">${ICONS.plus}</svg></button>
+        </div>
       </div>
     `));
 
@@ -630,6 +634,86 @@
     }
 
     view.querySelector("#new-game-btn").addEventListener("click", () => requireAdmin(openNewGameSheet));
+    view.querySelector("#calendar-btn").addEventListener("click", () => go("/calendario"));
+  });
+
+  /* ---------------------------------------------------------
+     VIEW: Calendario del equipo (calendario.json, actualizado cada
+     semana desde la web de la FBM con GitHub Actions)
+     --------------------------------------------------------- */
+  function fmtFecha(iso) {
+    const d = new Date(iso);
+    const dia = d.toLocaleDateString("es-ES", { weekday: "short", day: "2-digit", month: "short" });
+    const hora = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    return { dia, hora };
+  }
+
+  route("/calendario", (view) => {
+    const head = el(`
+      <div class="pagehead">
+        <div class="pagehead-left">
+          <button class="iconbtn iconbtn-sm" id="back-btn"><svg viewBox="0 0 24 24">${ICONS.back}</svg></button>
+          <div>
+            <h1>Calendario</h1>
+            <div class="sub">${esc(DB.team.name)} · Liga FBM</div>
+          </div>
+        </div>
+      </div>
+    `);
+    view.appendChild(head);
+    head.querySelector("#back-btn").addEventListener("click", () => goBack("/"));
+
+    const body = el(`<div>${emptyState(null, "Cargando calendario…", "")}</div>`);
+    view.appendChild(body);
+
+    fetch("calendario.json", { cache: "no-store" })
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(c => {
+        body.innerHTML = "";
+        const ahora = Date.now();
+        const partidos = c.partidos || [];
+        const proximo = partidos.find(p => !p.jugado && p.fecha && new Date(p.fecha).getTime() >= ahora)
+          || partidos.find(p => !p.jugado);
+
+        if (proximo) {
+          const f = fmtFecha(proximo.fecha);
+          body.insertAdjacentHTML("beforeend", `
+            <div class="section-title">Próximo partido</div>
+            <div class="card next-match">
+              <div class="game-vs">${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
+              <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
+              <div class="game-meta">${esc(proximo.campo)}</div>
+            </div>`);
+        }
+
+        body.appendChild(el(`<div class="section-title">Todos los partidos</div>`));
+        const lista = el(`<div class="card"></div>`);
+        partidos.forEach(p => {
+          const f = p.fecha ? fmtFecha(p.fecha) : { dia: p.fechaTexto, hora: "" };
+          let resultado = "";
+          if (p.jugado) {
+            const nuestro = p.esLocal ? p.puntosLocal : p.puntosVisitante;
+            const suyo = p.esLocal ? p.puntosVisitante : p.puntosLocal;
+            const gana = nuestro > suyo;
+            resultado = `<span class="res ${gana ? "win" : "lose"}">${gana ? "V" : "D"} ${nuestro}-${suyo}</span>`;
+          }
+          lista.appendChild(el(`
+            <div class="cal-row ${p.jugado ? "played" : ""}">
+              <div class="cal-date"><b>${esc(f.dia)}</b><small>${esc(f.hora)}</small></div>
+              <div class="cal-main">
+                <div class="cal-rival">${p.esLocal ? "vs" : "@"} <b>${esc(p.rival)}</b></div>
+                <div class="cal-campo">${esc(p.campo)}</div>
+              </div>
+              <div class="cal-res">${resultado}</div>
+            </div>`));
+        });
+        body.appendChild(lista);
+        body.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}. Se revisa cada semana automáticamente.</p>`));
+      })
+      .catch(() => {
+        body.innerHTML = "";
+        body.appendChild(el(emptyState(ICONS.calendar, "No se pudo cargar el calendario", "Revisa la conexión e inténtalo de nuevo.")));
+      });
   });
 
   function gameCard(g) {
