@@ -768,12 +768,14 @@
   // "MORATALAZ P3c/ VALDEBERNARDO, 2 28030, Madrid" -> pista y calle en dos líneas
   function formatCampo(campo) {
     if (!campo) return "";
-    const [pista, ...resto] = campo.split("/");
+    // La "c" de "P2c" significa "calle": la pista es P2 y la calle es Valdebernardo.
+    const [pistaRaw, ...resto] = campo.split("/");
+    const pista = pistaRaw.trim().replace(/(P\d+)c\b/i, "$1");
     const calle = resto.join("/")
       .replace(/,?\s*\d{5}.*$/, "")
       .replace(/,?\s*Madrid\s*$/i, "")
       .trim();
-    return calle ? `${esc(pista.trim())}<br>${esc(calle)}` : esc(pista.trim());
+    return calle ? `${esc(pista)}<br>${esc("Calle " + calle)}` : esc(pista);
   }
 
   function gameCard(g) {
