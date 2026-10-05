@@ -40,10 +40,10 @@ jobs:
           fi
 
       - name: Publicar la app en Surge
-        if: ${{ secrets.SURGE_TOKEN != '' }}
         env:
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
         run: |
+          if [ -z "$SURGE_TOKEN" ]; then echo "Sin SURGE_TOKEN: no se publica"; exit 0; fi
           mkdir -p dist
           cp index.html styles.css app.js manifest.webmanifest icon.svg sw.js calendario.json dist/
           npx --yes surge dist chavalitros-basket.surge.sh
