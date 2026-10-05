@@ -886,3 +886,13 @@ table.stats-table tbody tr.selected td:first-child { color: var(--accent); }
 }
 .res.win { color: var(--good); background: rgba(12,163,12,0.12); }
 .res.lose { color: var(--critical); background: rgba(230,103,103,0.12); }
+
+/* La app no es una página de texto: no se selecciona nada (salvo campos de escritura) */
+html, body, #view, #tabbar, .card, table, td, th, button, a {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, select { -webkit-user-select: text; user-select: text; }
+table.standings td:nth-child(2) { text-align: left; white-space: nowrap; }
+table.standings th:nth-child(2) { text-align: left; }

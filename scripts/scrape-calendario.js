@@ -1,5 +1,5 @@
-// Extrae el calendario de Chavalitros de la web de la FBM y lo guarda en
-// calendario.json. Se ejecuta semanalmente desde GitHub Actions.
+// Extrae de la web de la FBM los partidos y la clasificación de Chavalitros
+// y los guarda en calendario.json. Se ejecuta semanalmente desde GitHub Actions.
 // Si cambian los filtros (delegación, competición, categoría, fase, grupo)
 // se ajustan en FILTROS.
 const fs = require("fs");
@@ -40,7 +40,23 @@ async function scrapeGrupo() {
       ]);
       await page.waitForTimeout(1500);
     }
-    return await page.evaluate(() => {
+
+    const clasificacion = await page.evaluate(() => {
+      const t = [...document.querySelectorAll("table")].find(x => {
+        const h = [...x.querySelectorAll("th")].map(h => h.textContent.trim());
+        return h.includes("Nombre") && h.includes("Puntos") && h.includes("P.J");
+      });
+      if (!t) return [];
+      const cab = [...t.querySelectorAll("th")].map(h => h.textContent.trim());
+      return [...t.querySelectorAll("tbody tr")].map(tr => {
+        const c = [...tr.children].map(td => td.textContent.replace(/\s+/g, " ").trim());
+        const fila = {};
+        cab.forEach((k, i) => { if (k) fila[k] = c[i] ?? ""; });
+        return fila;
+      }).filter(f => f["Nombre"]);
+    });
+
+    const partidos = await page.evaluate(() => {
       const out = [];
       const tablas = [...document.querySelectorAll("table")].filter(t => {
         const h = [...t.querySelectorAll("th")].map(x => x.textContent.trim());
@@ -73,13 +89,15 @@ async function scrapeGrupo() {
       });
       return out;
     });
+
+    return { partidos, clasificacion };
   } finally {
     await browser.close();
   }
 }
 
 (async () => {
-  const todos = await scrapeGrupo();
+  const { partidos: todos, clasificacion } = await scrapeGrupo();
   const equipo = todos.filter(p => p.local.toUpperCase() === EQUIPO || p.visitante.toUpperCase() === EQUIPO);
   if (equipo.length === 0) throw new Error("No se encontró ningún partido de " + EQUIPO + " (¿ha cambiado la web?)");
 
@@ -104,8 +122,23 @@ async function scrapeGrupo() {
     })
     .sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
 
-  const salida = { actualizado: new Date().toISOString(), equipo: EQUIPO, fuente: URL, partidos };
+  const salida = {
+    actualizado: new Date().toISOString(),
+    equipo: EQUIPO,
+    fuente: URL,
+    clasificacion: clasificacion.map(f => ({
+      puesto: Number(f["N°"]) || null,
+      nombre: f["Nombre"],
+      pj: Number(f["P.J"]) || 0,
+      pg: Number(f["P.G"]) || 0,
+      pp: Number(f["P.P"]) || 0,
+      pf: Number(f["P.F"]) || 0,
+      pc: Number(f["P.C"]) || 0,
+      puntos: Number(f["Puntos"]) || 0,
+    })),
+    partidos,
+  };
   const destino = path.join(__dirname, "..", "calendario.json");
   fs.writeFileSync(destino, JSON.stringify(salida, null, 2) + "\n");
-  console.log(`OK: ${partidos.length} partidos de ${EQUIPO} guardados en calendario.json`);
+  console.log(`OK: ${partidos.length} partidos y ${salida.clasificacion.length} equipos en la clasificación guardados en calendario.json`);
 })().catch(e => { console.error(e); process.exit(1); });

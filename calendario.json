@@ -1,7 +1,119 @@
 {
-  "actualizado": "2026-10-05T22:45:28.217Z",
+  "actualizado": "2026-10-05T22:55:41.949Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
+  "clasificacion": [
+    {
+      "puesto": 1,
+      "nombre": "MDA",
+      "pj": 1,
+      "pg": 1,
+      "pp": 0,
+      "pf": 62,
+      "pc": 14,
+      "puntos": 2
+    },
+    {
+      "puesto": 2,
+      "nombre": "CHAVALITROS",
+      "pj": 1,
+      "pg": 1,
+      "pp": 0,
+      "pf": 56,
+      "pc": 16,
+      "puntos": 2
+    },
+    {
+      "puesto": 3,
+      "nombre": "TROPICALEROS",
+      "pj": 1,
+      "pg": 1,
+      "pp": 0,
+      "pf": 59,
+      "pc": 23,
+      "puntos": 2
+    },
+    {
+      "puesto": 4,
+      "nombre": "NABUCO TD",
+      "pj": 1,
+      "pg": 1,
+      "pp": 0,
+      "pf": 49,
+      "pc": 38,
+      "puntos": 2
+    },
+    {
+      "puesto": 5,
+      "nombre": "LITROS DE MAHOU",
+      "pj": 1,
+      "pg": 1,
+      "pp": 0,
+      "pf": 49,
+      "pc": 44,
+      "puntos": 2
+    },
+    {
+      "puesto": 6,
+      "nombre": "LOS KHINKIS RUSOS",
+      "pj": 1,
+      "pg": 0,
+      "pp": 1,
+      "pf": 44,
+      "pc": 49,
+      "puntos": 1
+    },
+    {
+      "puesto": 7,
+      "nombre": "CHUPITIMANGUIS",
+      "pj": 1,
+      "pg": 0,
+      "pp": 1,
+      "pf": 38,
+      "pc": 49,
+      "puntos": 1
+    },
+    {
+      "puesto": 8,
+      "nombre": "WILD BOYS",
+      "pj": 1,
+      "pg": 0,
+      "pp": 1,
+      "pf": 23,
+      "pc": 59,
+      "puntos": 1
+    },
+    {
+      "puesto": 9,
+      "nombre": "VALLEKAS BASKET",
+      "pj": 1,
+      "pg": 0,
+      "pp": 1,
+      "pf": 16,
+      "pc": 56,
+      "puntos": 1
+    },
+    {
+      "puesto": 10,
+      "nombre": "ENFERMOS DEL ARO",
+      "pj": 1,
+      "pg": 0,
+      "pp": 1,
+      "pf": 14,
+      "pc": 62,
+      "puntos": 1
+    },
+    {
+      "puesto": 11,
+      "nombre": "RIF",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "pf": 0,
+      "pc": 0,
+      "puntos": 0
+    }
+  ],
   "partidos": [
     {
       "jornada": "Jornada 1",

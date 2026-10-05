@@ -471,6 +471,8 @@
   function updateTabbar(path) {
     let tab = "home";
     if (path.startsWith("/season")) tab = "season";
+    else if (path.startsWith("/calendario")) tab = "calendario";
+    else if (path.startsWith("/calendario")) tab = "calendario";
     else if (path.startsWith("/roster")) tab = "roster";
     else if (path.startsWith("/settings")) tab = "settings";
     document.querySelectorAll("#tabbar a").forEach(a => {
@@ -603,10 +605,7 @@
           <h1>${esc(DB.team.name)}</h1>
           <div class="sub">${games.length} partido${games.length === 1 ? "" : "s"} registrado${games.length === 1 ? "" : "s"}</div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="iconbtn" id="calendar-btn" aria-label="Calendario"><svg viewBox="0 0 24 24">${ICONS.calendar}</svg></button>
-          <button class="iconbtn" id="new-game-btn"><svg viewBox="0 0 24 24">${ICONS.plus}</svg></button>
-        </div>
+        <button class="iconbtn" id="new-game-btn"><svg viewBox="0 0 24 24">${ICONS.plus}</svg></button>
       </div>
     `));
 
@@ -634,7 +633,6 @@
     }
 
     view.querySelector("#new-game-btn").addEventListener("click", () => requireAdmin(openNewGameSheet));
-    view.querySelector("#calendar-btn").addEventListener("click", () => go("/calendario"));
   });
 
   /* ---------------------------------------------------------
@@ -649,21 +647,17 @@
   }
 
   route("/calendario", (view) => {
-    const head = el(`
+    view.appendChild(el(`
       <div class="pagehead">
-        <div class="pagehead-left">
-          <button class="iconbtn iconbtn-sm" id="back-btn"><svg viewBox="0 0 24 24">${ICONS.back}</svg></button>
-          <div>
-            <h1>Calendario</h1>
-            <div class="sub">${esc(DB.team.name)} · Liga FBM</div>
-          </div>
+        <div>
+          <h1>Calendario</h1>
+          <div class="sub">${esc(DB.team.name)} · Liga FBM</div>
         </div>
       </div>
-    `);
-    view.appendChild(head);
-    head.querySelector("#back-btn").addEventListener("click", () => goBack("/"));
+    `));
 
-    const body = el(`<div>${emptyState(null, "Cargando calendario…", "")}</div>`);
+    const body = el(`<div></div>`);
+    body.innerHTML = emptyState(null, "Cargando calendario…", "");
     view.appendChild(body);
 
     fetch("calendario.json", { cache: "no-store" })
@@ -682,8 +676,20 @@
             <div class="card next-match">
               <div class="game-vs">${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
               <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
-              <div class="game-meta">${esc(proximo.campo)}</div>
+              <div class="game-meta">${formatCampo(proximo.campo)}</div>
             </div>`);
+        }
+
+        if (Array.isArray(c.clasificacion) && c.clasificacion.length) {
+          body.insertAdjacentHTML("beforeend", `<div class="section-title">Clasificación</div>
+            <div class="table-wrap"><table class="stats-table standings">
+              <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PP</th><th>PF</th><th>PC</th><th>Pts</th></tr></thead>
+              <tbody>${c.clasificacion.map(e => `
+                <tr class="${e.nombre.toUpperCase() === (c.equipo || "").toUpperCase() ? "selected" : ""}">
+                  <td>${e.puesto ?? ""}</td><td>${esc(e.nombre)}</td><td>${e.pj}</td><td>${e.pg}</td><td>${e.pp}</td>
+                  <td>${e.pf}</td><td>${e.pc}</td><td><b>${e.puntos}</b></td>
+                </tr>`).join("")}
+              </tbody></table></div>`);
         }
 
         body.appendChild(el(`<div class="section-title">Todos los partidos</div>`));
@@ -702,7 +708,7 @@
               <div class="cal-date"><b>${esc(f.dia)}</b><small>${esc(f.hora)}</small></div>
               <div class="cal-main">
                 <div class="cal-rival">${p.esLocal ? "vs" : "@"} <b>${esc(p.rival)}</b></div>
-                <div class="cal-campo">${esc(p.campo)}</div>
+                <div class="cal-campo">${formatCampo(p.campo)}</div>
               </div>
               <div class="cal-res">${resultado}</div>
             </div>`));
@@ -715,6 +721,17 @@
         body.appendChild(el(emptyState(ICONS.calendar, "No se pudo cargar el calendario", "Revisa la conexión e inténtalo de nuevo.")));
       });
   });
+
+  // "MORATALAZ P3c/ VALDEBERNARDO, 2 28030, Madrid" -> pista y calle en dos líneas
+  function formatCampo(campo) {
+    if (!campo) return "";
+    const [pista, ...resto] = campo.split("/");
+    const calle = resto.join("/")
+      .replace(/,?\s*\d{5}.*$/, "")
+      .replace(/,?\s*Madrid\s*$/i, "")
+      .trim();
+    return calle ? `${esc(pista.trim())}<br>${esc(calle)}` : esc(pista.trim());
+  }
 
   function gameCard(g) {
     const us = teamScore(g);
