@@ -72,7 +72,7 @@ a { color: inherit; text-decoration: none; }
 
 #view {
   min-height: 100%;
-  padding: calc(env(safe-area-inset-top) + 40px) 16px calc(var(--tabbar-h) + var(--safe-b) + 28px);
+  padding: calc(env(safe-area-inset-top) + 16px) 16px calc(var(--tabbar-h) + var(--safe-b) + 28px);
   max-width: 640px;
   margin: 0 auto;
 }
@@ -445,7 +445,7 @@ a { color: inherit; text-decoration: none; }
    pegada arriba del scroll para no tener que buscarla nunca. */
 .live-sticky {
   position: sticky;
-  top: calc(env(safe-area-inset-top) + 40px);
+  top: env(safe-area-inset-top);
   z-index: 25;
   background: var(--page);
   margin: 0 -16px;
@@ -896,3 +896,15 @@ html, body, #view, #tabbar, .card, table, td, th, button, a {
 input, textarea, select { -webkit-user-select: text; user-select: text; }
 table.standings td:nth-child(2) { text-align: left; white-space: nowrap; }
 table.standings th:nth-child(2) { text-align: left; }
+
+/* Botón de admin: parte del contenido (no fijo), alineado a la derecha */
+.admin-toggle {
+  position: static !important;
+  display: none;
+  margin: 0 0 10px auto;
+  padding: 6px 12px 6px 10px;
+  font-size: 12px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.admin-toggle:not([style*="display: none"]) { display: flex; }

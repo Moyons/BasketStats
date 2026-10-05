@@ -462,6 +462,7 @@
     const view = document.getElementById("view");
     if (!m) { view.innerHTML = emptyState("¿?", "Página no encontrada", ""); return; }
     view.innerHTML = "";
+    if (adminToggleBtn) view.appendChild(adminToggleBtn);
     if (isNavigation) window.scrollTo(0, 0);
     m.handler(view, m.params);
     updateTabbar(path);
@@ -472,8 +473,7 @@
     let tab = "home";
     if (path.startsWith("/season")) tab = "season";
     else if (path.startsWith("/calendario")) tab = "calendario";
-    else if (path.startsWith("/calendario")) tab = "calendario";
-    else if (path.startsWith("/roster")) tab = "roster";
+    else if (path.startsWith("/equipo") || path.startsWith("/roster") || path.startsWith("/calendario") || path.startsWith("/player")) tab = "equipo";
     else if (path.startsWith("/settings")) tab = "settings";
     document.querySelectorAll("#tabbar a").forEach(a => {
       a.classList.toggle("active", a.dataset.tab === tab);
@@ -646,24 +646,14 @@
     return { dia, hora };
   }
 
-  route("/calendario", (view) => {
-    view.appendChild(el(`
-      <div class="pagehead">
-        <div>
-          <h1>Calendario</h1>
-          <div class="sub">${esc(DB.team.name)} · Liga FBM</div>
-        </div>
-      </div>
-    `));
-
-    const body = el(`<div></div>`);
-    body.innerHTML = emptyState(null, "Cargando calendario…", "");
-    view.appendChild(body);
-
+  // Liga: próximo partido, clasificación y calendario de liga (calendario.json,
+  // actualizado cada semana desde la web de la FBM).
+  function renderLiga(container) {
+    container.innerHTML = `<p class="hint" style="margin-top:4px">Cargando liga…</p>`;
     fetch("calendario.json", { cache: "no-store" })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(c => {
-        body.innerHTML = "";
+        container.innerHTML = "";
         const ahora = Date.now();
         const partidos = c.partidos || [];
         const proximo = partidos.find(p => !p.jugado && p.fecha && new Date(p.fecha).getTime() >= ahora)
@@ -671,8 +661,8 @@
 
         if (proximo) {
           const f = fmtFecha(proximo.fecha);
-          body.insertAdjacentHTML("beforeend", `
-            <div class="section-title">Próximo partido</div>
+          container.insertAdjacentHTML("beforeend", `
+            <div class="section-title">Próximo partido de liga</div>
             <div class="card next-match">
               <div class="game-vs">${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
               <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
@@ -681,7 +671,7 @@
         }
 
         if (Array.isArray(c.clasificacion) && c.clasificacion.length) {
-          body.insertAdjacentHTML("beforeend", `<div class="section-title">Clasificación</div>
+          container.insertAdjacentHTML("beforeend", `<div class="section-title">Clasificación</div>
             <div class="table-wrap"><table class="stats-table standings">
               <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PP</th><th>PF</th><th>PC</th><th>Pts</th></tr></thead>
               <tbody>${c.clasificacion.map(e => `
@@ -692,7 +682,7 @@
               </tbody></table></div>`);
         }
 
-        body.appendChild(el(`<div class="section-title">Todos los partidos</div>`));
+        container.insertAdjacentHTML("beforeend", `<div class="section-title">Calendario de liga</div>`);
         const lista = el(`<div class="card"></div>`);
         partidos.forEach(p => {
           const f = p.fecha ? fmtFecha(p.fecha) : { dia: p.fechaTexto, hora: "" };
@@ -713,14 +703,65 @@
               <div class="cal-res">${resultado}</div>
             </div>`));
         });
-        body.appendChild(lista);
-        body.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}. Se revisa cada semana automáticamente.</p>`));
+        container.appendChild(lista);
+        container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}. Se revisa cada semana automáticamente.</p>`));
       })
       .catch(() => {
-        body.innerHTML = "";
-        body.appendChild(el(emptyState(ICONS.calendar, "No se pudo cargar el calendario", "Revisa la conexión e inténtalo de nuevo.")));
+        container.innerHTML = "";
+        container.appendChild(el(emptyState(ICONS.calendar, "No se pudo cargar la liga", "Revisa la conexión e inténtalo de nuevo.")));
       });
+  }
+
+  /* ---------------------------------------------------------
+     VIEW: Equipo (liga, nuestros partidos y plantilla)
+     --------------------------------------------------------- */
+  route("/equipo", (view) => {
+    view.appendChild(el(`
+      <div class="pagehead">
+        <div>
+          <h1>Equipo</h1>
+          <div class="sub">${esc(DB.team.name)}</div>
+        </div>
+      </div>
+    `));
+
+    const liga = el(`<div></div>`);
+    view.appendChild(liga);
+    renderLiga(liga);
+
+    view.appendChild(el(`<div class="section-title">Partidos registrados en la app</div>`));
+    const games = [...DB.games].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    if (games.length === 0) {
+      view.appendChild(el(`<p class="hint" style="margin-top:2px">Todavía no hay partidos. Créalos desde la pestaña Partidos.</p>`));
+    } else {
+      const wrap = el(`<div></div>`);
+      games.forEach(g => wrap.appendChild(gameCard(g)));
+      view.appendChild(wrap);
+    }
+
+    view.appendChild(el(`<div class="section-title">Plantilla (${DB.players.length})</div>`));
+    const addRow = el(`<div style="display:flex;justify-content:flex-end;margin:-4px 0 8px"><button class="btn btn-ghost btn-sm" id="equipo-add">+ Añadir jugador</button></div>`);
+    view.appendChild(addRow);
+    addRow.querySelector("#equipo-add").addEventListener("click", () => requireAdmin(() => openPlayerForm()));
+
+    const sorted = [...DB.players].sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
+    const card = el(`<div class="card"></div>`);
+    if (sorted.length === 0) card.innerHTML = `<p class="hint">Todavía no hay jugadores.</p>`;
+    sorted.forEach(p => card.appendChild(el(`
+      <a class="roster-item" href="#/player/${p.id}">
+        <div class="num">${esc(p.number ?? "")}</div>
+        <div class="info">
+          <div class="nm">${esc(p.name)}</div>
+          <div class="pos">${esc(p.position || "")}</div>
+        </div>
+        <div class="go"><svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>
+      </a>`)));
+    view.appendChild(card);
   });
+
+  // Rutas antiguas: ahora viven dentro de Equipo.
+  route("/roster", () => { location.replace("#/equipo"); });
+  route("/calendario", () => { location.replace("#/equipo"); });
 
   // "MORATALAZ P3c/ VALDEBERNARDO, 2 28030, Madrid" -> pista y calle en dos líneas
   function formatCampo(campo) {
@@ -1348,47 +1389,6 @@
   /* ---------------------------------------------------------
      VIEW: Roster (plantilla)
      --------------------------------------------------------- */
-  route("/roster", (view) => {
-    view.appendChild(el(`
-      <div class="pagehead">
-        <div>
-          <h1>Plantilla</h1>
-          <div class="sub">${DB.players.length} jugador${DB.players.length === 1 ? "" : "es"}</div>
-        </div>
-        <button class="iconbtn" id="add-player-btn"><svg viewBox="0 0 24 24">${ICONS.plus}</svg></button>
-      </div>
-    `));
-
-    if (DB.players.length === 0) {
-      view.appendChild(el(emptyState(
-        ICONS.team,
-        "Sin jugadores",
-        "Añade a los jugadores de tu equipo para empezar a registrar partidos.",
-        `<button class="btn btn-primary" id="add-player-btn-2">Añadir jugador</button>`
-      )));
-      view.querySelector("#add-player-btn-2").addEventListener("click", () => requireAdmin(() => openPlayerForm()));
-    } else {
-      const card = el(`<div class="card"></div>`);
-      const sorted = [...DB.players].sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
-      sorted.forEach(p => {
-        const row = el(`
-          <a class="roster-item" href="#/player/${p.id}">
-            <div class="num">${esc(p.number ?? "")}</div>
-            <div class="info">
-              <div class="nm">${esc(p.name)}</div>
-              <div class="pos">${esc(p.position || "")}</div>
-            </div>
-            <div class="go"><svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>
-          </a>
-        `);
-        card.appendChild(row);
-      });
-      view.appendChild(card);
-    }
-
-    view.querySelector("#add-player-btn").addEventListener("click", () => requireAdmin(() => openPlayerForm()));
-  });
-
   function openPlayerForm(existing) {
     openSheet(`
       <h3 class="modal-title">${existing ? "Editar jugador" : "Nuevo jugador"}</h3>
@@ -1586,18 +1586,6 @@
       )));
       return;
     }
-
-    const filterRow = el(`
-      <div class="checkbox-row" style="margin-bottom:6px">
-        <input type="checkbox" id="finished-only" ${seasonFinishedOnly ? "checked" : ""}>
-        <label for="finished-only" class="hint">Solo partidos finalizados</label>
-      </div>
-    `);
-    view.appendChild(filterRow);
-    filterRow.querySelector("#finished-only").addEventListener("change", (e) => {
-      seasonFinishedOnly = e.target.checked;
-      render();
-    });
 
     const rows = activePlayers().map(p => {
       const events = allPlayerEvents(p.id, { finishedOnly: seasonFinishedOnly });
