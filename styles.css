@@ -1031,6 +1031,11 @@ table.standings th:nth-child(2) { text-align: left; }
 table.stats-table td:first-child, table.stats-table th:first-child { background-clip: padding-box; }
 table.stats-table tbody tr:nth-child(odd) td:first-child { background: var(--surface-1); }
 table.stats-table tbody tr.totals-row td:first-child { background: var(--surface-1); }
+/* La fila resaltada (p.ej. nuestro equipo en la clasificación) usa un
+   fondo degradado translúcido en toda la fila; en la columna fija hace
+   falta uno sólido, si no el resto de columnas se transparenta por
+   detrás al desplazar la tabla. */
+table.stats-table tbody tr.selected td:first-child { background: #2a1a0c; color: var(--accent-2); font-weight: 800; }
 
 /* Escudos (iniciales con degradado, color fijo por nombre de rival) */
 .crest {
