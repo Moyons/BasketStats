@@ -573,13 +573,14 @@ a { color: inherit; text-decoration: none; }
   box-shadow: var(--shadow-card);
 }
 .hero-crest {
-  width: 52px; height: 52px; flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--accent-grad);
+  height: 54px; flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 14px;
+  background: #fdfdfb;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 10px 22px -8px rgba(255,90,20,0.6);
+  box-shadow: 0 10px 22px -8px rgba(0,0,0,0.45);
 }
-.hero-crest svg { width: 28px; height: 28px; stroke: var(--accent-ink); fill: none; stroke-width: 2; }
+.hero-crest img { height: 100%; width: auto; display: block; }
 .hero-stats { flex: 1; min-width: 0; }
 .hero-wl { display: flex; align-items: baseline; gap: 7px; font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 28px; }
 .hero-wl .w { color: var(--good); }
@@ -921,15 +922,17 @@ table.stats-table td.pct small {
 table.stats-table td.neg { color: var(--critical); }
 .pct-line {
   display: flex; justify-content: space-between; gap: 8px;
+  flex-wrap: wrap;
   margin-top: 10px;
   font-size: 13px; color: var(--text-secondary);
 }
 .pct-line b { color: var(--text-primary); font-family: "Barlow Condensed", sans-serif; font-size: 18px; }
 .pct-line small { color: var(--text-muted); font-size: 11px; }
 
-/* +/- compacto en una línea dentro de la cabecera del jugador */
-.pm-box { flex-direction: row; gap: 6px; align-items: center; }
-.pm-box input { width: 54px; margin-top: 0; font-size: 18px; padding: 2px 4px; }
+/* MIN y +/- compactos, uno junto al otro, en la cabecera del jugador */
+.statpad-meta { display: flex; gap: 6px; flex-shrink: 0; }
+.pm-box { flex-direction: row; gap: 5px; align-items: center; }
+.pm-box input { width: 42px; margin-top: 0; font-size: 16px; padding: 2px 4px; }
 
 /* Resumen del partido en tarjetas (una por jugador) */
 .sum-card {

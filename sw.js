@@ -1,11 +1,12 @@
-const CACHE = "basketstats-v4";
+const CACHE = "basketstats-v5";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./manifest.webmanifest",
-  "./icon.svg",
+  "./icon-512.png",
+  "./logo-chavalitros-trim.png",
 ];
 
 self.addEventListener("install", (e) => {

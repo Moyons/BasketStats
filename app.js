@@ -44,6 +44,7 @@
       g.events = asArray(g.events);
       // Un objeto vacío también desaparece en Firebase, así que lo rehacemos.
       g.pm = g.pm && typeof g.pm === "object" ? g.pm : {};
+      g.min = g.min && typeof g.min === "object" ? g.min : {};
       return g;
     });
     if (!db.team) db.team = { name: "Mi Equipo" };
@@ -358,6 +359,8 @@
   function pct(m, a) { return a > 0 ? Math.round((m / a) * 100) : null; }
   function pctStr(m, a) { const p = pct(m, a); return p === null ? "—" : p + "%"; }
   function avg(total, games) { return games > 0 ? total / games : 0; }
+  // Porcentaje de tiro con los aciertos/intentos debajo (tabla de partido y de temporada).
+  function shootCell(m, a) { return `${pctStr(m, a)}<small>${m}/${a}</small>`; }
 
   // Valoración (fórmula habitual de liga, tipo ACB/PIR): suma lo positivo
   // y resta lo negativo. Faltas recibidas no se registran en la app, así
@@ -367,24 +370,39 @@
       - (s.fga - s.fgm) - (s.fta - s.ftm) - s.tov - s.foul;
   }
 
-  // +/- oficial del jugador en un partido (lo introduce el admin cuando
-  // lo publica la web). null = todavía no introducido.
+  // +/- oficial y minutos jugados: los introduce el admin a mano cuando
+  // se publican (la app no cronometra el partido). null = sin introducir.
   function gamePM(game, pid) {
     const v = game.pm && game.pm[pid];
+    return typeof v === "number" ? v : null;
+  }
+  function gameMin(game, pid) {
+    const v = game.min && game.min[pid];
     return typeof v === "number" ? v : null;
   }
   function fmtSigned(n) {
     if (n === null || n === undefined) return "—";
     return n > 0 ? "+" + n : String(n);
   }
-  function seasonPM(playerId, { finishedOnly = false } = {}) {
+  // Devuelve tanto el total acumulado como la media por partido (solo
+  // cuenta los partidos en los que se llegó a introducir el dato).
+  function seasonPMStats(playerId, { finishedOnly = false } = {}) {
     let total = 0, n = 0;
     for (const g of DB.games) {
       if (finishedOnly && g.status !== "final") continue;
       const v = gamePM(g, playerId);
       if (v !== null) { total += v; n++; }
     }
-    return n ? total : null;
+    return { total: n ? total : null, avg: n ? total / n : null, n };
+  }
+  function seasonMinAvg(playerId, { finishedOnly = false } = {}) {
+    let total = 0, n = 0;
+    for (const g of DB.games) {
+      if (finishedOnly && g.status !== "final") continue;
+      const v = gameMin(g, playerId);
+      if (v !== null) { total += v; n++; }
+    }
+    return n ? total / n : null;
   }
   function fmtAvg(n) {
     if (!isFinite(n)) return "0.0";
@@ -633,7 +651,7 @@
     if (decided.length > 0) {
       view.appendChild(el(`
         <div class="hero-record">
-          <div class="hero-crest"><svg viewBox="0 0 24 24">${ICONS.ball}</svg></div>
+          <div class="hero-crest"><img src="logo-chavalitros-trim.png" alt="${esc(DB.team.name)}"></div>
           <div class="hero-stats">
             <div class="hero-wl">
               <span class="w">${wins}V</span><span class="sep">·</span><span class="l">${losses}D</span>${draws ? `<span class="sep">·</span><span class="d">${draws}E</span>` : ""}
@@ -1016,7 +1034,7 @@
       renderGameSummary(view, game, roster);
       if (selectedPlayer) {
         view.appendChild(el(`<div class="section-title">Detalle: ${esc(selectedPlayer.name)}</div>`));
-        renderReadOnlyPlayerStats(view, game, selectedPlayer, isUnlocked() ? "Reabre el partido desde el menú para seguir editando." : "Partido finalizado.");
+        renderReadOnlyPlayerStats(view, game, selectedPlayer, isUnlocked() ? "" : "Partido finalizado.");
       }
     } else if (selectedPlayer && isUnlocked()) {
       renderStatPad(view, game, selectedPlayer);
@@ -1135,9 +1153,8 @@
 
     rows.sort((a, b) => valoracion(b.s) - valoracion(a.s));
     const sum = (k) => rows.reduce((a, r) => a + r.s[k], 0);
+    const sumMin = rows.reduce((a, r) => a + (gameMin(game, r.player.id) || 0), 0);
     const teamS = aggregate(rows.flatMap(r => playerEventsInGame(game, r.player.id)));
-    // Porcentaje con aciertos/intentos debajo.
-    const pc = (m, a) => `${pctStr(m, a)}<small>${m}/${a}</small>`;
     const selectedId = liveSelectedPlayer[game.id];
 
     const table = el(`
@@ -1145,13 +1162,14 @@
       <table class="stats-table">
         <thead>
           <tr>
-            <th>Jugador</th><th>VAL</th><th>+/-</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>FAL</th><th>FR</th><th>TC</th><th>3P</th><th>TL</th>
+            <th>Jugador</th><th>MIN</th><th>VAL</th><th>+/-</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>FAL</th><th>FR</th><th>TC</th><th>T2</th><th>T3</th><th>TL</th>
           </tr>
         </thead>
         <tbody>
           ${rows.map(r => `
             <tr data-pid="${r.player.id}" class="${selectedId === r.player.id ? "selected" : ""}">
               <td>${esc(shortName(r.player.name))}</td>
+              <td>${gameMin(game, r.player.id) ?? "—"}</td>
               <td class="${valoracion(r.s) < 0 ? "neg" : ""}">${valoracion(r.s)}</td>
               <td>${fmtSigned(gamePM(game, r.player.id))}</td>
               <td>${r.s.pts}</td>
@@ -1162,13 +1180,15 @@
               <td>${r.s.tov}</td>
               <td>${r.s.foul}${r.s.foul >= FOUL_LIMIT ? " ⚠" : ""}</td>
               <td>${r.s.fouled}</td>
-              <td class="pct">${pc(r.s.fgm, r.s.fga)}</td>
-              <td class="pct">${pc(r.s.p3m, r.s.p3a)}</td>
-              <td class="pct">${pc(r.s.ftm, r.s.fta)}</td>
+              <td class="pct">${shootCell(r.s.fgm, r.s.fga)}</td>
+              <td class="pct">${shootCell(r.s.p2m, r.s.p2a)}</td>
+              <td class="pct">${shootCell(r.s.p3m, r.s.p3a)}</td>
+              <td class="pct">${shootCell(r.s.ftm, r.s.fta)}</td>
             </tr>
           `).join("")}
           <tr class="totals-row">
             <td>Equipo</td>
+            <td>${sumMin || ""}</td>
             <td></td>
             <td></td>
             <td>${sum("pts")}</td>
@@ -1179,9 +1199,10 @@
             <td>${sum("tov")}</td>
             <td>${sum("foul")}</td>
             <td>${sum("fouled")}</td>
-            <td class="pct">${pc(teamS.fgm, teamS.fga)}</td>
-            <td class="pct">${pc(teamS.p3m, teamS.p3a)}</td>
-            <td class="pct">${pc(teamS.ftm, teamS.fta)}</td>
+            <td class="pct">${shootCell(teamS.fgm, teamS.fga)}</td>
+            <td class="pct">${shootCell(teamS.p2m, teamS.p2a)}</td>
+            <td class="pct">${shootCell(teamS.p3m, teamS.p3a)}</td>
+            <td class="pct">${shootCell(teamS.ftm, teamS.fta)}</td>
           </tr>
         </tbody>
       </table>
@@ -1195,7 +1216,7 @@
       });
     });
     view.appendChild(table);
-    view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL = puntos + rebotes + asistencias + robos + tapones + faltas recibidas − tiros fallados − pérdidas − faltas cometidas. Toca un jugador para ver su detalle.</p>`));
+    view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL = puntos + rebotes + asistencias + robos + tapones + faltas recibidas − tiros fallados − pérdidas − faltas cometidas.</p>`));
   }
 
   function shortName(name) {
@@ -1216,10 +1237,16 @@
           <div class="name">${esc(player.name)}</div>
           <div class="line">${s.pts} PTS · ${s.reb} REB · ${s.ast} AST · ${pctStr(s.fgm, s.fga)} TC · VAL ${valoracion(s)}</div>
         </div>
-        <label class="pm-box">
-          <span>+/-</span>
-          <input type="number" inputmode="numeric" id="pm-input" placeholder="—" value="${gamePM(game, player.id) ?? ""}">
-        </label>
+        <div class="statpad-meta">
+          <label class="pm-box">
+            <span>MIN</span>
+            <input type="number" inputmode="numeric" min="0" id="min-input" placeholder="—" value="${gameMin(game, player.id) ?? ""}">
+          </label>
+          <label class="pm-box">
+            <span>+/-</span>
+            <input type="number" inputmode="numeric" id="pm-input" placeholder="—" value="${gamePM(game, player.id) ?? ""}">
+          </label>
+        </div>
       </div>
     `);
     view.appendChild(head);
@@ -1228,6 +1255,14 @@
       game.pm = game.pm || {};
       if (v === "") delete game.pm[player.id];
       else game.pm[player.id] = Math.max(-60, Math.min(60, parseInt(v, 10) || 0));
+      saveDB();
+      location.hash = location.hash; render();
+    });
+    head.querySelector("#min-input").addEventListener("change", (e) => {
+      const v = e.target.value.trim();
+      game.min = game.min || {};
+      if (v === "") delete game.min[player.id];
+      else game.min[player.id] = Math.max(0, Math.min(99, parseInt(v, 10) || 0));
       saveDB();
       location.hash = location.hash; render();
     });
@@ -1326,6 +1361,7 @@
         ${statTile(s.stl, "ROB")}
         ${statTile(s.blk, "TAP")}
         ${statTile(s.tov, "PÉR")}
+        ${statTile(gameMin(game, player.id) ?? "—", "MIN")}
         ${statTile(fmtSigned(gamePM(game, player.id)), "+/-")}
         ${statTile(valoracion(s), "VAL")}
       </div>
@@ -1333,11 +1369,12 @@
     view.appendChild(el(`
       <div class="pct-line">
         <span>TC <b>${pctStr(s.fgm, s.fga)}</b> <small>${s.fgm}/${s.fga}</small></span>
-        <span>3P <b>${pctStr(s.p3m, s.p3a)}</b> <small>${s.p3m}/${s.p3a}</small></span>
+        <span>T2 <b>${pctStr(s.p2m, s.p2a)}</b> <small>${s.p2m}/${s.p2a}</small></span>
+        <span>T3 <b>${pctStr(s.p3m, s.p3a)}</b> <small>${s.p3m}/${s.p3a}</small></span>
         <span>TL <b>${pctStr(s.ftm, s.fta)}</b> <small>${s.ftm}/${s.fta}</small></span>
       </div>
     `));
-    view.appendChild(el(`<p class="hint" style="margin:14px 2px">${esc(reason)}</p>`));
+    if (reason) view.appendChild(el(`<p class="hint" style="margin:14px 2px">${esc(reason)}</p>`));
     renderEventLog(view, game, player.id, false);
   }
 
@@ -1522,6 +1559,9 @@
     view.appendChild(playerHead);
     playerHead.querySelector("#back-btn").addEventListener("click", () => goBack("/roster"));
 
+    const pmStats = seasonPMStats(player.id);
+    const minAvg = seasonMinAvg(player.id);
+
     view.appendChild(el(`<div class="section-title">Promedios de temporada (${gp} PJ)</div>`));
     view.appendChild(el(`
       <div class="stat-tiles">
@@ -1531,6 +1571,9 @@
         ${statTile(fmtAvg(avg(s.stl, gp)), "ROB")}
         ${statTile(fmtAvg(avg(s.blk, gp)), "TAP")}
         ${statTile(fmtAvg(avg(s.tov, gp)), "PÉRD")}
+        ${statTile(minAvg === null ? "—" : fmtAvg(minAvg), "MIN")}
+        ${statTile(pmStats.avg === null ? "—" : fmtSigned(Math.round(pmStats.avg * 10) / 10), "+/-")}
+        ${statTile(fmtAvg(avg(valoracion(s), gp)), "VAL")}
       </div>
     `));
 
@@ -1538,11 +1581,17 @@
     const totalsCard = el(`<div class="card">
       <div class="stat-tiles">
         ${statTile(s.pts, "PTS TOT.")}
-        ${statTile(pctStr(s.fgm, s.fga), "TC%")}
-        ${statTile(pctStr(s.p3m, s.p3a), "3P%")}
-        ${statTile(pctStr(s.ftm, s.fta), "TL%")}
         ${statTile(s.reb, "REB")}
+        ${statTile(s.ast, "AST")}
         ${statTile(s.foul, "FALTAS")}
+        ${statTile(s.fouled, "F. RECIB.")}
+        ${statTile(fmtSigned(pmStats.total), "+/- TOT.")}
+      </div>
+      <div class="pct-line" style="margin-top:14px">
+        <span>TC <b>${pctStr(s.fgm, s.fga)}</b> <small>${s.fgm}/${s.fga}</small></span>
+        <span>T2 <b>${pctStr(s.p2m, s.p2a)}</b> <small>${s.p2m}/${s.p2a}</small></span>
+        <span>T3 <b>${pctStr(s.p3m, s.p3a)}</b> <small>${s.p3m}/${s.p3a}</small></span>
+        <span>TL <b>${pctStr(s.ftm, s.fta)}</b> <small>${s.ftm}/${s.fta}</small></span>
       </div>
     </div>`);
     view.appendChild(totalsCard);
@@ -1713,14 +1762,18 @@
       <table class="stats-table">
         <thead>
           <tr>
-            <th>Jugador</th><th>PJ</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>VAL</th><th>+/-</th><th>TC%</th><th>3P%</th><th>TL%</th>
+            <th>Jugador</th><th>PJ</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>ROB</th><th>TAP</th><th>PÉR</th><th>VAL</th><th>+/-</th><th>+/- TOT</th><th>TC</th><th>T2</th><th>T3</th><th>TL</th>
           </tr>
         </thead>
         <tbody>
-          ${sorted.map(r => `
+          ${sorted.map(r => {
+            const pm = seasonPMStats(r.player.id, { finishedOnly: seasonFinishedOnly });
+            const minAvg = seasonMinAvg(r.player.id, { finishedOnly: seasonFinishedOnly });
+            return `
             <tr data-pid="${r.player.id}">
               <td>${esc(shortName(r.player.name))}</td>
               <td>${r.gp}</td>
+              <td>${minAvg === null ? "—" : fmtAvg(minAvg)}</td>
               <td>${fmtAvg(avg(r.s.pts, r.gp))}</td>
               <td>${fmtAvg(avg(r.s.reb, r.gp))}</td>
               <td>${fmtAvg(avg(r.s.ast, r.gp))}</td>
@@ -1728,12 +1781,14 @@
               <td>${fmtAvg(avg(r.s.blk, r.gp))}</td>
               <td>${fmtAvg(avg(r.s.tov, r.gp))}</td>
               <td>${fmtAvg(avg(valoracion(r.s), r.gp))}</td>
-              <td>${fmtSigned(seasonPM(r.player.id, { finishedOnly: seasonFinishedOnly }))}</td>
-              <td>${pctStr(r.s.fgm, r.s.fga)}</td>
-              <td>${pctStr(r.s.p3m, r.s.p3a)}</td>
-              <td>${pctStr(r.s.ftm, r.s.fta)}</td>
+              <td>${pm.avg === null ? "—" : fmtSigned(Math.round(pm.avg * 10) / 10)}</td>
+              <td>${fmtSigned(pm.total)}</td>
+              <td class="pct">${shootCell(r.s.fgm, r.s.fga)}</td>
+              <td class="pct">${shootCell(r.s.p2m, r.s.p2a)}</td>
+              <td class="pct">${shootCell(r.s.p3m, r.s.p3a)}</td>
+              <td class="pct">${shootCell(r.s.ftm, r.s.fta)}</td>
             </tr>
-          `).join("")}
+          `; }).join("")}
         </tbody>
       </table>
     `);
