@@ -67,32 +67,35 @@ body {
      sin animar) — lo único que se mueve es el balón, paseándose por la
      esquina inferior derecha vía background-position. */
   background-image:
-    radial-gradient(circle 62vmin at 22% 25%, rgba(255,122,26,0.34), transparent 70%),
-    radial-gradient(circle 56vmin at 78% 14%, rgba(57,135,229,0.28), transparent 70%),
-    radial-gradient(circle 52vmin at 14% 78%, rgba(213,81,129,0.24), transparent 70%),
-    radial-gradient(circle 54vmin at 86% 82%, rgba(255,176,32,0.26), transparent 70%),
+    radial-gradient(circle 38vmin at 20% 20%, rgba(255,122,26,0.15), transparent 100%),
+    radial-gradient(circle 34vmin at 80% 10%, rgba(57,135,229,0.12), transparent 100%),
+    radial-gradient(circle 32vmin at 12% 80%, rgba(213,81,129,0.10), transparent 100%),
+    radial-gradient(circle 33vmin at 85% 85%, rgba(255,176,32,0.11), transparent 100%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='rgba(255,170,90,0.22)' stroke-width='0.4'/%3E%3Cpath d='M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8' fill='none' stroke='rgba(255,170,90,0.22)' stroke-width='0.4'/%3E%3C/svg%3E"),
     repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1.2px, transparent 1.2px, transparent 56px);
-  background-position: 0 0, 0 0, 0 0, 0 0, right -6vmin bottom -6vmin, 0 0;
+  background-position: 0 0, 0 0, 0 0, 0 0, 88% 82%, 0 0;
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
-  background-size: auto, auto, auto, auto, 46vmin, auto;
+  background-size: auto, auto, auto, auto, 40vmin, auto;
   /* fixed: ligado al viewport, no a la altura total de la página, para que
      el mesh y el balón se vean igual sin importar lo larga que sea la
      página (calendario, temporada...). */
   background-attachment: fixed, fixed, fixed, fixed, fixed, scroll;
-  animation: ballDrift 16s ease-in-out infinite;
+  animation: ballDrift 24s ease-in-out infinite;
   color: var(--text-primary);
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
 }
+/* El balón recorre casi toda la pantalla (sobre todo la mitad
+   inferior); el mesh de color se queda quieto. */
 @keyframes ballDrift {
-  0%   { background-position: 0 0, 0 0, 0 0, 0 0, right -6vmin  bottom -6vmin, 0 0; }
-  20%  { background-position: 0 0, 0 0, 0 0, 0 0, right 12vmin  bottom 10vmin, 0 0; }
-  45%  { background-position: 0 0, 0 0, 0 0, 0 0, right 27vmin  bottom 1vmin,  0 0; }
-  65%  { background-position: 0 0, 0 0, 0 0, 0 0, right 15vmin  bottom 24vmin, 0 0; }
-  85%  { background-position: 0 0, 0 0, 0 0, 0 0, right -2vmin  bottom 9vmin,  0 0; }
-  100% { background-position: 0 0, 0 0, 0 0, 0 0, right -6vmin  bottom -6vmin, 0 0; }
+  0%   { background-position: 0 0, 0 0, 0 0, 0 0, 88% 82%, 0 0; }
+  18%  { background-position: 0 0, 0 0, 0 0, 0 0, 58% 55%, 0 0; }
+  36%  { background-position: 0 0, 0 0, 0 0, 0 0, 20% 88%, 0 0; }
+  54%  { background-position: 0 0, 0 0, 0 0, 0 0, 8%  62%, 0 0; }
+  72%  { background-position: 0 0, 0 0, 0 0, 0 0, 42% 95%, 0 0; }
+  90%  { background-position: 0 0, 0 0, 0 0, 0 0, 75% 68%, 0 0; }
+  100% { background-position: 0 0, 0 0, 0 0, 0 0, 88% 82%, 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   body { animation: none; }
