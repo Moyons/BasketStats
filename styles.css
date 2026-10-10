@@ -74,7 +74,7 @@ body {
 .bg-glow {
   position: fixed;
   inset: -20%;
-  z-index: -1;
+  z-index: 0;
   overflow: hidden;
   pointer-events: none;
   background-image:
@@ -89,7 +89,7 @@ body {
 }
 .bg-ball {
   position: fixed;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   width: 38vmax;
   height: 38vmax;
@@ -129,6 +129,8 @@ button { font-family: inherit; }
 a { color: inherit; text-decoration: none; }
 
 #view {
+  position: relative;
+  z-index: 1;
   min-height: 100%;
   padding: calc(env(safe-area-inset-top) + 16px) 16px calc(var(--tabbar-h) + var(--safe-b) + 28px);
   max-width: 640px;
