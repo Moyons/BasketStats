@@ -1702,13 +1702,20 @@
   /* ---------------------------------------------------------
      VIEW: Season stats
      --------------------------------------------------------- */
+  // Cada métrica define cómo calcular su valor medio por jugador (getValue)
+  // y cómo formatearlo (fmt), para poder mezclar sumas simples (PTS, REB…)
+  // con cálculos especiales (+/-, MIN en mm:ss, % de tiro).
   const STAT_METRICS = [
-    { key: "pts", label: "Puntos", short: "PTS", perGame: true },
-    { key: "reb", label: "Rebotes", short: "REB", perGame: true },
-    { key: "ast", label: "Asistencias", short: "AST", perGame: true },
-    { key: "stl", label: "Robos", short: "ROB", perGame: true },
-    { key: "blk", label: "Tapones", short: "TAP", perGame: true },
-    { key: "tov", label: "Pérdidas", short: "PÉR", perGame: true },
+    { key: "pts", label: "Puntos", short: "PTS", caption: "Promedio de puntos por partido", getValue: r => avg(r.s.pts, r.gp), fmt: fmtAvg },
+    { key: "reb", label: "Rebotes", short: "REB", caption: "Promedio de rebotes por partido", getValue: r => avg(r.s.reb, r.gp), fmt: fmtAvg },
+    { key: "ast", label: "Asistencias", short: "AST", caption: "Promedio de asistencias por partido", getValue: r => avg(r.s.ast, r.gp), fmt: fmtAvg },
+    { key: "stl", label: "Robos", short: "ROB", caption: "Promedio de robos por partido", getValue: r => avg(r.s.stl, r.gp), fmt: fmtAvg },
+    { key: "blk", label: "Tapones", short: "TAP", caption: "Promedio de tapones por partido", getValue: r => avg(r.s.blk, r.gp), fmt: fmtAvg },
+    { key: "tov", label: "Pérdidas", short: "PÉR", caption: "Promedio de pérdidas por partido", getValue: r => avg(r.s.tov, r.gp), fmt: fmtAvg },
+    { key: "val", label: "Valoración", short: "VAL", caption: "Valoración media por partido", getValue: r => avg(valoracion(r.s), r.gp), fmt: fmtAvg },
+    { key: "pm", label: "+/-", short: "+/-", caption: "+/- medio por partido", getValue: r => seasonPMStats(r.player.id, { finishedOnly: seasonFinishedOnly }).avg, fmt: v => fmtSigned(Math.round(v * 10) / 10) },
+    { key: "min", label: "Minutos", short: "MIN", caption: "Minutos medios por partido", getValue: r => seasonMinAvg(r.player.id, { finishedOnly: seasonFinishedOnly }), fmt: v => fmtMinSec(Math.round(v)) },
+    { key: "tcpct", label: "% de tiro", short: "TC%", caption: "Porcentaje de tiros de campo de la temporada", getValue: r => r.s.fga > 0 ? (r.s.fgm / r.s.fga) * 100 : null, fmt: v => Math.round(v) + "%" },
   ];
   let seasonMetric = "pts";
   let seasonFinishedOnly = false;
@@ -1763,26 +1770,31 @@
 
   function leaderboardChart(rows, metricKey) {
     const metric = STAT_METRICS.find(m => m.key === metricKey);
-    const data = rows.map(r => ({
-      name: r.player.name,
-      avgVal: avg(r.s[metricKey], r.gp),
-    })).sort((a, b) => b.avgVal - a.avgVal).slice(0, 10);
-    const max = Math.max(1, ...data.map(d => d.avgVal));
+    const data = rows
+      .map(r => ({ name: r.player.name, avgVal: metric.getValue(r) }))
+      .filter(d => d.avgVal !== null && d.avgVal !== undefined && isFinite(d.avgVal))
+      .sort((a, b) => b.avgVal - a.avgVal)
+      .slice(0, 10);
 
     const card = el(`<div class="card"></div>`);
+    if (data.length === 0) {
+      card.appendChild(el(`<p class="hint" style="margin:0">Sin datos todavía para este criterio.</p>`));
+      return card;
+    }
+    const max = Math.max(1, ...data.map(d => Math.abs(d.avgVal)));
     data.forEach((d, i) => {
-      const pctW = Math.max(4, (d.avgVal / max) * 100);
+      const pctW = Math.max(4, (Math.abs(d.avgVal) / max) * 100);
       const row = el(`
         <div class="leaderboard-row">
           <div class="rk">${i + 1}</div>
           <div class="nm">${esc(d.name)}</div>
-          <div class="val tabular">${fmtAvg(d.avgVal)}</div>
+          <div class="val tabular">${metric.fmt(d.avgVal)}</div>
           <div class="barwrap"><div class="bar" style="width:${pctW}%"></div></div>
         </div>
       `);
       card.appendChild(row);
     });
-    const cap = el(`<div class="hint" style="margin-top:10px">Promedio de ${esc(metric.label).toLowerCase()} por partido</div>`);
+    const cap = el(`<div class="hint" style="margin-top:10px">${esc(metric.caption)}</div>`);
     card.appendChild(cap);
     return card;
   }
