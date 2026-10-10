@@ -78,9 +78,9 @@ body {
   overflow: hidden;
   pointer-events: none;
   background-image:
-    radial-gradient(1000px 560px at 8% -12%, rgba(255,122,26,0.17), transparent 58%),
-    radial-gradient(760px 520px at 104% -4%, rgba(57,135,229,0.11), transparent 55%),
-    radial-gradient(640px 480px at 50% 120%, rgba(255,176,32,0.08), transparent 60%),
+    radial-gradient(90vmax 55vmax at 8% -12%, rgba(255,122,26,0.17), transparent 58%),
+    radial-gradient(70vmax 50vmax at 104% -4%, rgba(57,135,229,0.11), transparent 55%),
+    radial-gradient(60vmax 46vmax at 50% 120%, rgba(255,176,32,0.08), transparent 60%),
     repeating-linear-gradient(135deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 64px);
   background-color: var(--page);
   background-repeat: no-repeat, no-repeat, no-repeat, repeat;
@@ -88,11 +88,15 @@ body {
   will-change: transform;
 }
 .bg-ball {
-  position: absolute;
-  width: 480px;
-  height: 480px;
-  right: -10%;
-  bottom: -8%;
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  width: 38vmax;
+  height: 38vmax;
+  max-width: 640px;
+  max-height: 640px;
+  right: -8vmax;
+  bottom: -8vmax;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='rgba(255,140,50,0.5)' stroke-width='0.3'/%3E%3Cpath d='M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8' fill='none' stroke='rgba(255,140,50,0.5)' stroke-width='0.3'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
