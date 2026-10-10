@@ -668,7 +668,6 @@
     const wins = decided.filter(g => teamScore(g) > g.oppScore).length;
     const losses = decided.filter(g => teamScore(g) < g.oppScore).length;
     const draws = decided.length - wins - losses;
-    const avgPts = finished.length ? Math.round(finished.reduce((a, g) => a + teamScore(g), 0) / finished.length) : 0;
 
     view.appendChild(el(`
       <div class="pagehead">
@@ -688,7 +687,6 @@
             <div class="hero-wl">
               <span class="w">${wins}V</span><span class="sep">·</span><span class="l">${losses}D</span>${draws ? `<span class="sep">·</span><span class="d">${draws}E</span>` : ""}
             </div>
-            <div class="hero-sub">${avgPts} PTS/PARTIDO · ${decided.length} PJ</div>
           </div>
         </div>
       `));
