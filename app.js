@@ -688,7 +688,7 @@
             <div class="hero-wl">
               <span class="w">${wins}V</span><span class="sep">·</span><span class="l">${losses}D</span>${draws ? `<span class="sep">·</span><span class="d">${draws}E</span>` : ""}
             </div>
-            <div class="hero-sub">${avgPts} puntos de media · ${decided.length} partido${decided.length === 1 ? "" : "s"} jugado${decided.length === 1 ? "" : "s"}</div>
+            <div class="hero-sub">${avgPts} PTS/PARTIDO · ${decided.length} PJ</div>
           </div>
         </div>
       `));
@@ -1716,6 +1716,9 @@
     { key: "pm", label: "+/-", short: "+/-", caption: "+/- medio por partido", getValue: r => seasonPMStats(r.player.id, { finishedOnly: seasonFinishedOnly }).avg, fmt: v => fmtSigned(Math.round(v * 10) / 10) },
     { key: "min", label: "Minutos", short: "MIN", caption: "Minutos medios por partido", getValue: r => seasonMinAvg(r.player.id, { finishedOnly: seasonFinishedOnly }), fmt: v => fmtMinSec(Math.round(v)) },
     { key: "tcpct", label: "% de tiro", short: "TC%", caption: "Porcentaje de tiros de campo de la temporada", getValue: r => r.s.fga > 0 ? (r.s.fgm / r.s.fga) * 100 : null, fmt: v => Math.round(v) + "%" },
+    { key: "t2pct", label: "% de tiro de 2", short: "T2%", caption: "Porcentaje de tiros de 2 de la temporada", getValue: r => r.s.p2a > 0 ? (r.s.p2m / r.s.p2a) * 100 : null, fmt: v => Math.round(v) + "%" },
+    { key: "t3pct", label: "% de triples", short: "T3%", caption: "Porcentaje de triples de la temporada", getValue: r => r.s.p3a > 0 ? (r.s.p3m / r.s.p3a) * 100 : null, fmt: v => Math.round(v) + "%" },
+    { key: "tlpct", label: "% de tiros libres", short: "TL%", caption: "Porcentaje de tiros libres de la temporada", getValue: r => r.s.fta > 0 ? (r.s.ftm / r.s.fta) * 100 : null, fmt: v => Math.round(v) + "%" },
   ];
   let seasonMetric = "pts";
   let seasonFinishedOnly = false;
@@ -1762,6 +1765,11 @@
     });
     view.appendChild(pillRow);
     view.appendChild(leaderboardChart(rows, seasonMetric));
+    // Cada clic reconstruye la vista entera, así que sin esto la fila de
+    // pestañas volvería siempre al principio en vez de quedarse donde
+    // estaba el usuario.
+    const activePill = pillRow.querySelector("button.active");
+    if (activePill) activePill.scrollIntoView({ inline: "nearest", block: "nearest" });
 
     // Full stats table
     view.appendChild(el(`<div class="section-title">Tabla completa</div>`));
