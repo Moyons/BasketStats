@@ -501,6 +501,22 @@
     return String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  // "Escudo" de un rival: iniciales sobre un degradado de color fijo para
+  // ese nombre (mismo equipo siempre sale con el mismo color).
+  function hashHue(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return h % 360;
+  }
+  function crestHtml(name, size) {
+    const n = (name || "?").trim();
+    const letter = n ? n[0].toUpperCase() : "?";
+    const hue = hashHue(n.toUpperCase());
+    const cls = "crest" + (size ? " crest-" + size : "");
+    const bg = `linear-gradient(135deg, hsl(${hue} 68% 52%), hsl(${(hue + 36) % 360} 68% 36%))`;
+    return `<span class="${cls}" style="background:${bg}">${esc(letter)}</span>`;
+  }
+
   let toastTimer = null;
   function toast(msg) {
     const t = document.getElementById("toast");
@@ -512,7 +528,7 @@
 
   function emptyState(iconSvg, title, desc, actionHtml) {
     return `<div class="empty-state">
-      ${iconSvg ? `<svg viewBox="0 0 24 24">${iconSvg}</svg>` : ""}
+      ${iconSvg ? `<div class="ic-wrap"><svg viewBox="0 0 24 24">${iconSvg}</svg></div>` : ""}
       <h3>${esc(title)}</h3>
       <p>${esc(desc)}</p>
       ${actionHtml || ""}
@@ -598,6 +614,11 @@
     const games = [...DB.games].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     const live = games.filter(g => g.status === "live");
     const finished = games.filter(g => g.status === "final");
+    const decided = finished.filter(g => g.oppScore !== null && g.oppScore !== undefined);
+    const wins = decided.filter(g => teamScore(g) > g.oppScore).length;
+    const losses = decided.filter(g => teamScore(g) < g.oppScore).length;
+    const draws = decided.length - wins - losses;
+    const avgPts = finished.length ? Math.round(finished.reduce((a, g) => a + teamScore(g), 0) / finished.length) : 0;
 
     view.appendChild(el(`
       <div class="pagehead">
@@ -608,6 +629,20 @@
         <button class="iconbtn" id="new-game-btn"><svg viewBox="0 0 24 24">${ICONS.plus}</svg></button>
       </div>
     `));
+
+    if (decided.length > 0) {
+      view.appendChild(el(`
+        <div class="hero-record">
+          <div class="hero-crest"><svg viewBox="0 0 24 24">${ICONS.ball}</svg></div>
+          <div class="hero-stats">
+            <div class="hero-wl">
+              <span class="w">${wins}V</span><span class="sep">·</span><span class="l">${losses}D</span>${draws ? `<span class="sep">·</span><span class="d">${draws}E</span>` : ""}
+            </div>
+            <div class="hero-sub">${avgPts} puntos de media · ${decided.length} partido${decided.length === 1 ? "" : "s"} jugado${decided.length === 1 ? "" : "s"}</div>
+          </div>
+        </div>
+      `));
+    }
 
     if (games.length === 0) {
       view.appendChild(el(emptyState(
@@ -664,7 +699,7 @@
           container.insertAdjacentHTML("beforeend", `
             <div class="section-title">Próximo partido de liga</div>
             <div class="card next-match">
-              <div class="game-vs">${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
+              <div class="game-vs">${crestHtml(proximo.rival, "sm")}${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
               <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
               <div class="game-meta">${formatCampo(proximo.campo)}</div>
             </div>`);
@@ -676,7 +711,7 @@
               <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PP</th><th>PF</th><th>PC</th><th>Pts</th></tr></thead>
               <tbody>${c.clasificacion.map(e => `
                 <tr class="${e.nombre.toUpperCase() === (c.equipo || "").toUpperCase() ? "selected" : ""}">
-                  <td>${e.puesto ?? ""}</td><td>${esc(e.nombre)}</td><td>${e.pj}</td><td>${e.pg}</td><td>${e.pp}</td>
+                  <td>${e.puesto ?? ""}</td><td><span class="standings-team">${crestHtml(e.nombre, "sm")}${esc(e.nombre)}</span></td><td>${e.pj}</td><td>${e.pg}</td><td>${e.pp}</td>
                   <td>${e.pf}</td><td>${e.pc}</td><td><b>${e.puntos}</b></td>
                 </tr>`).join("")}
               </tbody></table></div>`);
@@ -696,6 +731,7 @@
           lista.appendChild(el(`
             <div class="cal-row ${p.jugado ? "played" : ""}">
               <div class="cal-date"><b>${esc(f.dia)}</b><small>${esc(f.hora)}</small></div>
+              ${crestHtml(p.rival, "sm")}
               <div class="cal-main">
                 <div class="cal-rival">${p.esLocal ? "vs" : "@"} <b>${esc(p.rival)}</b></div>
                 <div class="cal-campo">${formatCampo(p.campo)}</div>
@@ -784,12 +820,15 @@
     const them = g.oppScore || 0;
     const d = g.date ? new Date(g.date) : new Date(g.createdAt);
     const dateStr = d.toLocaleDateString("es-ES", { day: "2-digit", month: "short" });
-    const result = g.status === "final" && hasRivalScore ? (us > them ? " · Victoria" : us < them ? " · Derrota" : " · Empate") : "";
+    const isLive = g.status === "live";
+    const isWin = !isLive && hasRivalScore && us > them;
+    const isLose = !isLive && hasRivalScore && us < them;
+    const result = g.status === "final" && hasRivalScore ? (isWin ? " · Victoria" : isLose ? " · Derrota" : " · Empate") : "";
     const card = el(`
-      <a class="game-card" href="#/game/${g.id}">
+      <a class="game-card ${isLive ? "is-live" : isWin ? "is-win" : isLose ? "is-lose" : ""}" href="#/game/${g.id}">
         <div class="game-card-top">
-          <div class="game-vs">vs <b>${esc(g.opponent || "Rival")}</b></div>
-          <span class="badge ${g.status === "live" ? "badge-live" : "badge-final"}">${g.status === "live" ? "En vivo" : "Final"}</span>
+          <div class="game-vs">${crestHtml(g.opponent, "sm")}vs <b>${esc(g.opponent || "Rival")}</b></div>
+          <span class="badge ${isLive ? "badge-live" : "badge-final"}">${isLive ? "En vivo" : "Final"}</span>
         </div>
         <div class="game-score">
           <span class="us">${us}</span>
