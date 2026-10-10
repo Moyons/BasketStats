@@ -681,6 +681,20 @@
     return { dia, hora };
   }
 
+  // Busca si un partido del calendario de la FBM tiene ya un partido
+  // creado en la app (mismo rival y, si hay fecha, el mismo día), para
+  // poder ir directo a sus estadísticas al tocarlo.
+  function findGameForLeagueMatch(p) {
+    const rivalNorm = (p.rival || "").trim().toUpperCase();
+    if (!rivalNorm) return null;
+    const diaFbm = p.fecha ? p.fecha.slice(0, 10) : null;
+    return DB.games.find(g => {
+      if ((g.opponent || "").trim().toUpperCase() !== rivalNorm) return false;
+      if (diaFbm && g.date) return g.date === diaFbm;
+      return true;
+    }) || null;
+  }
+
   // Liga: próximo partido, clasificación y calendario de liga (calendario.json,
   // actualizado cada semana desde la web de la FBM).
   function renderLiga(container) {
@@ -696,13 +710,17 @@
 
         if (proximo) {
           const f = fmtFecha(proximo.fecha);
+          const gameProximo = findGameForLeagueMatch(proximo);
+          const tag = gameProximo ? "a" : "div";
+          const hrefAttr = gameProximo ? ` href="#/game/${gameProximo.id}"` : "";
           container.insertAdjacentHTML("beforeend", `
             <div class="section-title">Próximo partido de liga</div>
-            <div class="card next-match">
+            <${tag} class="card next-match ${gameProximo ? "linked" : ""}"${hrefAttr}>
               <div class="game-vs">${crestHtml(proximo.rival, "sm")}${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
               <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
               <div class="game-meta">${formatCampo(proximo.campo)}</div>
-            </div>`);
+              ${gameProximo ? `<div class="cal-link-hint">Ver estadísticas <svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>` : ""}
+            </${tag}>`);
         }
 
         if (Array.isArray(c.clasificacion) && c.clasificacion.length) {
@@ -728,8 +746,11 @@
             const gana = nuestro > suyo;
             resultado = `<span class="res ${gana ? "win" : "lose"}">${gana ? "V" : "D"} ${nuestro}-${suyo}</span>`;
           }
+          const gamePartido = findGameForLeagueMatch(p);
+          const tag = gamePartido ? "a" : "div";
+          const hrefAttr = gamePartido ? ` href="#/game/${gamePartido.id}"` : "";
           lista.appendChild(el(`
-            <div class="cal-row ${p.jugado ? "played" : ""}">
+            <${tag} class="cal-row ${p.jugado ? "played" : ""} ${gamePartido ? "linked" : ""}"${hrefAttr}>
               <div class="cal-date"><b>${esc(f.dia)}</b><small>${esc(f.hora)}</small></div>
               ${crestHtml(p.rival, "sm")}
               <div class="cal-main">
@@ -737,7 +758,8 @@
                 <div class="cal-campo">${formatCampo(p.campo)}</div>
               </div>
               <div class="cal-res">${resultado}</div>
-            </div>`));
+              ${gamePartido ? `<svg class="cal-go" viewBox="0 0 24 24">${ICONS.chevron}</svg>` : ""}
+            </${tag}>`));
         });
         container.appendChild(lista);
         container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}. Se revisa cada semana automáticamente.</p>`));

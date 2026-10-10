@@ -1052,3 +1052,15 @@ table.stats-table tbody tr.selected td:first-child { background: #2a1a0c; color:
 
 .standings-team { display: inline-flex; align-items: center; gap: 7px; }
 .cal-row.played .crest { opacity: .55; }
+
+/* Partidos de liga enlazados a un partido propio: se pueden tocar */
+.cal-row.linked, .next-match.linked { cursor: pointer; }
+.cal-row.linked:active, .next-match.linked:active { background: var(--surface-2); }
+.cal-go { width: 18px; height: 18px; stroke: var(--text-muted); fill: none; stroke-width: 2.2; flex-shrink: 0; }
+.cal-link-hint {
+  display: flex; align-items: center; gap: 4px;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 12.5px; font-weight: 700; color: var(--accent);
+}
+.cal-link-hint svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.3; }
