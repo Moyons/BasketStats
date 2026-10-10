@@ -75,7 +75,7 @@ body {
     radial-gradient(circle 52vmin at 14% 78%, rgba(213,81,129,0.36), transparent 70%),
     radial-gradient(circle 54vmin at 86% 82%, rgba(255,176,32,0.40), transparent 70%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='rgba(255,170,90,0.18)' stroke-width='0.35'/%3E%3Cpath d='M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8' fill='none' stroke='rgba(255,170,90,0.18)' stroke-width='0.35'/%3E%3C/svg%3E"),
-    repeating-linear-gradient(135deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 64px);
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1.5px, transparent 1.5px, transparent 46px);
   background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, right -6vmin bottom -6vmin, 0 0;
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
   background-size: 300% 300%, 300% 300%, 300% 300%, 300% 300%, 42vmin, auto;
