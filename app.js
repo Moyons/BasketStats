@@ -932,7 +932,7 @@
     // barra fija de abajo, así que aquí no los repetimos — solo lo
     // imprescindible para volver atrás o abrir el menú del partido.
     const gameHead = el(`
-      <div class="pagehead" style="margin-bottom:2px">
+      <div class="pagehead" style="margin-bottom:14px">
         <div class="pagehead-left">
           <button class="iconbtn iconbtn-sm" id="back-btn"><svg viewBox="0 0 24 24">${ICONS.back}</svg></button>
           <h1 style="font-size:17px">${esc(DB.team.name)}</h1>
