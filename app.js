@@ -45,6 +45,13 @@
       // Un objeto vacío también desaparece en Firebase, así que lo rehacemos.
       g.pm = g.pm && typeof g.pm === "object" ? g.pm : {};
       g.min = g.min && typeof g.min === "object" ? g.min : {};
+      // Los minutos se guardaban como minutos enteros; ahora se guardan
+      // en segundos totales (para poder entrar mm:ss). Migración única
+      // por partido, marcada con _minInSeconds para no duplicar el valor.
+      if (!g._minInSeconds) {
+        Object.keys(g.min).forEach(pid => { g.min[pid] = g.min[pid] * 60; });
+        g._minInSeconds = true;
+      }
       return g;
     });
     if (!db.team) db.team = { name: "Mi Equipo" };
@@ -376,9 +383,34 @@
     const v = game.pm && game.pm[pid];
     return typeof v === "number" ? v : null;
   }
+  // Minutos jugados: se guardan en segundos totales para poder entrar
+  // también los segundos (formato mm:ss), igual que +/- lo introduce el
+  // admin a mano al terminar el partido.
   function gameMin(game, pid) {
     const v = game.min && game.min[pid];
     return typeof v === "number" ? v : null;
+  }
+  const MAX_MIN_SECONDS = 99 * 60 + 59;
+  function fmtMinSec(totalSeconds) {
+    if (totalSeconds === null || totalSeconds === undefined) return "—";
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+  // Acepta "mm:ss", "m:ss" o solo minutos ("28"); devuelve segundos totales.
+  function parseMinInput(str) {
+    const v = str.trim();
+    if (v === "") return null;
+    let m = 0, s = 0;
+    if (v.includes(":")) {
+      const [mPart, sPart] = v.split(":");
+      m = parseInt(mPart, 10) || 0;
+      s = parseInt(sPart, 10) || 0;
+    } else {
+      m = parseInt(v, 10) || 0;
+    }
+    const total = Math.max(0, m) * 60 + Math.max(0, Math.min(59, s));
+    return Math.max(0, Math.min(MAX_MIN_SECONDS, total));
   }
   function fmtSigned(n) {
     if (n === null || n === undefined) return "—";
@@ -1169,7 +1201,7 @@
           ${rows.map(r => `
             <tr data-pid="${r.player.id}" class="${selectedId === r.player.id ? "selected" : ""}">
               <td>${esc(shortName(r.player.name))}</td>
-              <td>${gameMin(game, r.player.id) ?? "—"}</td>
+              <td>${fmtMinSec(gameMin(game, r.player.id))}</td>
               <td class="${valoracion(r.s) < 0 ? "neg" : ""}">${valoracion(r.s)}</td>
               <td>${fmtSigned(gamePM(game, r.player.id))}</td>
               <td>${r.s.pts}</td>
@@ -1188,7 +1220,7 @@
           `).join("")}
           <tr class="totals-row">
             <td>Equipo</td>
-            <td>${sumMin || ""}</td>
+            <td>${sumMin ? fmtMinSec(sumMin) : ""}</td>
             <td></td>
             <td></td>
             <td>${sum("pts")}</td>
@@ -1238,9 +1270,9 @@
           <div class="line">${s.pts} PTS · ${s.reb} REB · ${s.ast} AST · ${pctStr(s.fgm, s.fga)} TC · VAL ${valoracion(s)}</div>
         </div>
         <div class="statpad-meta">
-          <label class="pm-box">
+          <label class="pm-box" id="min-box">
             <span>MIN</span>
-            <input type="number" inputmode="numeric" min="0" id="min-input" placeholder="—" value="${gameMin(game, player.id) ?? ""}">
+            <input type="text" inputmode="numeric" id="min-input" placeholder="mm:ss" value="${gameMin(game, player.id) !== null ? fmtMinSec(gameMin(game, player.id)) : ""}">
           </label>
           <label class="pm-box">
             <span>+/-</span>
@@ -1259,10 +1291,10 @@
       location.hash = location.hash; render();
     });
     head.querySelector("#min-input").addEventListener("change", (e) => {
-      const v = e.target.value.trim();
+      const parsed = parseMinInput(e.target.value);
       game.min = game.min || {};
-      if (v === "") delete game.min[player.id];
-      else game.min[player.id] = Math.max(0, Math.min(99, parseInt(v, 10) || 0));
+      if (parsed === null) delete game.min[player.id];
+      else game.min[player.id] = parsed;
       saveDB();
       location.hash = location.hash; render();
     });
@@ -1361,7 +1393,7 @@
         ${statTile(s.stl, "ROB")}
         ${statTile(s.blk, "TAP")}
         ${statTile(s.tov, "PÉR")}
-        ${statTile(gameMin(game, player.id) ?? "—", "MIN")}
+        ${statTile(fmtMinSec(gameMin(game, player.id)), "MIN")}
         ${statTile(fmtSigned(gamePM(game, player.id)), "+/-")}
         ${statTile(valoracion(s), "VAL")}
       </div>
@@ -1571,7 +1603,7 @@
         ${statTile(fmtAvg(avg(s.stl, gp)), "ROB")}
         ${statTile(fmtAvg(avg(s.blk, gp)), "TAP")}
         ${statTile(fmtAvg(avg(s.tov, gp)), "PÉRD")}
-        ${statTile(minAvg === null ? "—" : fmtAvg(minAvg), "MIN")}
+        ${statTile(fmtMinSec(minAvg === null ? null : Math.round(minAvg)), "MIN")}
         ${statTile(pmStats.avg === null ? "—" : fmtSigned(Math.round(pmStats.avg * 10) / 10), "+/-")}
         ${statTile(fmtAvg(avg(valoracion(s), gp)), "VAL")}
       </div>
@@ -1773,7 +1805,7 @@
             <tr data-pid="${r.player.id}">
               <td>${esc(shortName(r.player.name))}</td>
               <td>${r.gp}</td>
-              <td>${minAvg === null ? "—" : fmtAvg(minAvg)}</td>
+              <td>${fmtMinSec(minAvg === null ? null : Math.round(minAvg))}</td>
               <td>${fmtAvg(avg(r.s.pts, r.gp))}</td>
               <td>${fmtAvg(avg(r.s.reb, r.gp))}</td>
               <td>${fmtAvg(avg(r.s.ast, r.gp))}</td>

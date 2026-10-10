@@ -933,6 +933,7 @@ table.stats-table td.neg { color: var(--critical); }
 .statpad-meta { display: flex; gap: 6px; flex-shrink: 0; }
 .pm-box { flex-direction: row; gap: 5px; align-items: center; }
 .pm-box input { width: 42px; margin-top: 0; font-size: 16px; padding: 2px 4px; }
+#min-box input { width: 56px; }
 
 /* Resumen del partido en tarjetas (una por jugador) */
 .sum-card {
