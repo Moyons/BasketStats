@@ -976,6 +976,10 @@
     const us = teamScore(game);
     const them = game.oppScore || 0;
     const isFinal = game.status === "final";
+    // El fondo deja de animarse en cuanto se entra a un partido en vivo
+    // (no hace falta esperar a tocar un jugador): esta pantalla se usa a
+    // toques rápidos y sin parar, y el balón botando de fondo distrae.
+    if (!isFinal) document.body.classList.add("statpad-open");
 
     // Cabecera mínima: el nombre del rival y el marcador ya se ven en la
     // barra fija de abajo, así que aquí no los repetimos — solo lo
@@ -1258,9 +1262,6 @@
   }
 
   function renderStatPad(view, game, player) {
-    // El fondo deja de animarse aquí: la pantalla de añadir estadísticas
-    // se usa a toques rápidos durante el partido y el balón botando distrae.
-    document.body.classList.add("statpad-open");
     const events = playerEventsInGame(game, player.id);
     const s = aggregate(events);
 
