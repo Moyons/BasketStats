@@ -59,63 +59,32 @@ html, body { height: 100%; }
 html { background: var(--page); }
 body {
   margin: 0;
-  /* Sin fondo propio: así lo que pinta .bg-glow (fuera del flujo, z-index
-     negativo) no queda tapado por el fondo opaco de body. El color base
-     de respaldo vive en html. */
+  /* Fondo directamente en body (sin capas fijas ni z-index): es la forma
+     más básica y compatible que hay en CSS, para evitar los líos de
+     renderizado que daban position:fixed + z-index en algunos móviles. */
+  background-color: var(--page);
+  background-image:
+    radial-gradient(90vmax 55vmax, rgba(255,122,26,0.17), transparent 58%),
+    radial-gradient(70vmax 50vmax, rgba(57,135,229,0.11), transparent 55%),
+    radial-gradient(60vmax 46vmax, rgba(255,176,32,0.08), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='rgba(255,140,50,0.05)' stroke-width='0.3'/%3E%3Cpath d='M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8' fill='none' stroke='rgba(255,140,50,0.05)' stroke-width='0.3'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 64px);
+  background-position: 8% -12%, 104% -4%, 50% 120%, right -8vmax bottom -8vmax, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+  background-size: auto, auto, auto, 38vmax, auto;
+  animation: bgPan 40s ease-in-out infinite alternate;
   color: var(--text-primary);
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
 }
-
-/* Fondo animado: luces de cancha que derivan muy despacio + un balón de
-   líneas muy tenue girando de fondo. Fijo al viewport (no se mueve con el
-   scroll) y solo anima transform/opacity para no pesar en móvil. */
-.bg-glow {
-  position: fixed;
-  inset: -20%;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background-image:
-    radial-gradient(90vmax 55vmax at 8% -12%, rgba(255,122,26,0.17), transparent 58%),
-    radial-gradient(70vmax 50vmax at 104% -4%, rgba(57,135,229,0.11), transparent 55%),
-    radial-gradient(60vmax 46vmax at 50% 120%, rgba(255,176,32,0.08), transparent 60%),
-    repeating-linear-gradient(135deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 64px);
-  background-color: var(--page);
-  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
-  animation: bgDrift 30s ease-in-out infinite alternate;
-  will-change: transform;
-}
-.bg-ball {
-  position: fixed;
-  z-index: 0;
-  pointer-events: none;
-  width: 38vmax;
-  height: 38vmax;
-  max-width: 640px;
-  max-height: 640px;
-  right: -8vmax;
-  bottom: -8vmax;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='rgba(255,140,50,0.5)' stroke-width='0.3'/%3E%3Cpath d='M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8' fill='none' stroke='rgba(255,140,50,0.5)' stroke-width='0.3'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  opacity: 0.022;
-  transform-origin: center;
-  animation: bgSpin 110s linear infinite;
-  will-change: transform;
-}
-@keyframes bgDrift {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  50%  { transform: translate3d(-3%, 2%, 0) scale(1.05); }
-  100% { transform: translate3d(2%, -2%, 0) scale(1); }
-}
-@keyframes bgSpin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+@keyframes bgPan {
+  0%   { background-position: 8% -12%, 104% -4%, 50% 120%, right -8vmax bottom -8vmax, 0 0; }
+  50%  { background-position: 5% -9%, 101% -1%, 53% 117%, right -8vmax bottom -8vmax, 0 0; }
+  100% { background-position: 11% -15%, 107% -7%, 47% 123%, right -8vmax bottom -8vmax, 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bg-glow, .bg-ball { animation: none; }
+  body { animation: none; }
 }
 
 h1, h2, h3, .display {
@@ -129,8 +98,6 @@ button { font-family: inherit; }
 a { color: inherit; text-decoration: none; }
 
 #view {
-  position: relative;
-  z-index: 1;
   min-height: 100%;
   padding: calc(env(safe-area-inset-top) + 16px) 16px calc(var(--tabbar-h) + var(--safe-b) + 28px);
   max-width: 640px;
