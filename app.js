@@ -511,6 +511,7 @@
     const view = document.getElementById("view");
     if (!m) { view.innerHTML = emptyState("¿?", "Página no encontrada", ""); return; }
     view.innerHTML = "";
+    document.body.classList.remove("statpad-open");
     if (adminToggleBtn) view.appendChild(adminToggleBtn);
     if (isNavigation) window.scrollTo(0, 0);
     m.handler(view, m.params);
@@ -1257,6 +1258,9 @@
   }
 
   function renderStatPad(view, game, player) {
+    // El fondo deja de animarse aquí: la pantalla de añadir estadísticas
+    // se usa a toques rápidos durante el partido y el balón botando distrae.
+    document.body.classList.add("statpad-open");
     const events = playerEventsInGame(game, player.id);
     const s = aggregate(events);
 
