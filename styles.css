@@ -63,25 +63,38 @@ body {
      más básica y compatible que hay en CSS, para evitar los líos de
      renderizado que daban position:fixed + z-index en algunos móviles. */
   background-color: var(--page);
+  /* Cada radial-gradient vive dentro de un lienzo 3x más grande que la
+     pantalla (background-size 300%); al animar background-position esa
+     "ventana" se desliza por el lienzo, así el movimiento se ve de
+     verdad (con background-size:auto la imagen ya llena la caja entera
+     y mover la posición no hace nada — ese fue el bug de la versión
+     anterior, que animaba pero no se movía ni un píxel). */
   background-image:
-    radial-gradient(70vmin 46vmin, rgba(255,122,26,0.13), transparent 58%),
-    radial-gradient(55vmin 42vmin, rgba(57,135,229,0.08), transparent 55%),
-    radial-gradient(48vmin 38vmin, rgba(255,176,32,0.06), transparent 60%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='rgba(255,140,50,0.05)' stroke-width='0.3'/%3E%3Cpath d='M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8' fill='none' stroke='rgba(255,140,50,0.05)' stroke-width='0.3'/%3E%3C/svg%3E"),
+    radial-gradient(circle 62vmin at 22% 25%, rgba(255,122,26,0.48), transparent 70%),
+    radial-gradient(circle 56vmin at 78% 14%, rgba(57,135,229,0.40), transparent 70%),
+    radial-gradient(circle 52vmin at 14% 78%, rgba(213,81,129,0.36), transparent 70%),
+    radial-gradient(circle 54vmin at 86% 82%, rgba(255,176,32,0.40), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='rgba(255,170,90,0.18)' stroke-width='0.35'/%3E%3Cpath d='M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8' fill='none' stroke='rgba(255,170,90,0.18)' stroke-width='0.35'/%3E%3C/svg%3E"),
     repeating-linear-gradient(135deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 64px);
-  background-position: 8% -12%, 104% -4%, 50% 120%, right -8vmin bottom -8vmin, 0 0;
-  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
-  background-size: auto, auto, auto, 30vmin, auto;
-  animation: bgPan 40s ease-in-out infinite alternate;
+  background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, right -6vmin bottom -6vmin, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+  background-size: 300% 300%, 300% 300%, 300% 300%, 300% 300%, 42vmin, auto;
+  /* fixed: ligado al viewport, no a la altura total de la página — si no,
+     en páginas largas (calendario, temporada) el lienzo 300% se estira
+     sobre miles de píxeles y las manchas de color quedan diluidas/invisibles. */
+  background-attachment: fixed, fixed, fixed, fixed, fixed, scroll;
+  animation: bgPan 20s ease-in-out infinite;
   color: var(--text-primary);
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
 }
 @keyframes bgPan {
-  0%   { background-position: 8% -12%, 104% -4%, 50% 120%, right -8vmax bottom -8vmax, 0 0; }
-  50%  { background-position: 5% -9%, 101% -1%, 53% 117%, right -8vmax bottom -8vmax, 0 0; }
-  100% { background-position: 11% -15%, 107% -7%, 47% 123%, right -8vmax bottom -8vmax, 0 0; }
+  0%   { background-position: 0% 0%,     0% 0%,     0% 0%,     0% 0%,     right -6vmin bottom -6vmin, 0 0; }
+  25%  { background-position: 60% 20%,   60% 20%,   60% 20%,   60% 20%,   right -6vmin bottom -6vmin, 0 0; }
+  50%  { background-position: 100% 100%, 100% 100%, 100% 100%, 100% 100%, right -6vmin bottom -6vmin, 0 0; }
+  75%  { background-position: 30% 80%,   30% 80%,   30% 80%,   30% 80%,   right -6vmin bottom -6vmin, 0 0; }
+  100% { background-position: 0% 0%,     0% 0%,     0% 0%,     0% 0%,     right -6vmin bottom -6vmin, 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   body { animation: none; }
