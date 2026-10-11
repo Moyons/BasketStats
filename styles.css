@@ -862,11 +862,14 @@ table.stats-table thead th {
   border-bottom: 1px solid var(--border-strong);
   background: var(--surface-1);
 }
-table.stats-table tbody tr:nth-child(odd) { background: rgba(255,255,255,0.015); }
-table.stats-table tbody tr:nth-child(odd) td:first-child { background: var(--surface-2); }
-table.stats-table tbody td:first-child { background: var(--surface-1); font-weight: 700; color: var(--text-primary); }
+/* Fila impar: el mismo tono tanto en la columna fija como en el resto de
+   la fila — antes eran colores distintos y se notaba una costura en la
+   columna del jugador (más clara/oscura que el resto de la fila). */
+table.stats-table tbody tr:nth-child(odd) { background: #1a1c25; }
+table.stats-table tbody tr:nth-child(odd) td:first-child { background: #1a1c25; }
+table.stats-table tbody td:first-child { font-weight: 700; color: var(--text-primary); }
 table.stats-table tbody tr:active { background: var(--surface-3); }
-table.stats-table tbody tr.totals-row { font-weight: 800; border-top: 2px solid var(--border-strong); }
+table.stats-table tbody tr.totals-row { font-weight: 800; border-top: 2px solid var(--border-strong); background: var(--surface-2); }
 table.stats-table tbody tr.totals-row td:first-child { background: var(--surface-2); color: var(--text-primary); }
 table.stats-table tbody tr.totals-row:active { background: var(--surface-2); }
 
@@ -1068,14 +1071,21 @@ table.standings th:nth-child(2) { text-align: left; }
   isolation: isolate;
   transform: translateZ(0);
 }
+/* Difumina el borde derecho en vez de cortar las columnas a lo bruto,
+   pero solo cuando la tabla de verdad no cabe entera (si no, en pantallas
+   anchas se comería la última columna sin motivo). El izquierdo no hace
+   falta: ahí está la columna fija del jugador, siempre visible. */
+.table-wrap.is-scrollable {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 22px), transparent 100%);
+  mask-image: linear-gradient(to right, black calc(100% - 22px), transparent 100%);
+}
 table.stats-table td:first-child, table.stats-table th:first-child { background-clip: padding-box; }
-table.stats-table tbody tr:nth-child(odd) td:first-child { background: var(--surface-1); }
-table.stats-table tbody tr.totals-row td:first-child { background: var(--surface-1); }
 /* La fila resaltada (p.ej. nuestro equipo en la clasificación) usa un
-   fondo degradado translúcido en toda la fila; en la columna fija hace
-   falta uno sólido, si no el resto de columnas se transparenta por
-   detrás al desplazar la tabla. */
-table.stats-table tbody tr.selected td:first-child { background: #2a1a0c; color: var(--accent-2); font-weight: 800; }
+   fondo translúcido (var(--accent-dim)) en toda la fila; en la columna
+   fija hace falta uno sólido, si no el resto de columnas se transparenta
+   al desplazar la tabla. #3b2921 es var(--accent-dim) ya mezclado sobre
+   var(--surface-1), para que no se note distinto del resto de la fila. */
+table.stats-table tbody tr.selected td:first-child { background: #3b2921; color: var(--accent-2); font-weight: 800; }
 
 /* Escudos (iniciales con degradado, color fijo por nombre de rival) */
 .crest {

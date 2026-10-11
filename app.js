@@ -552,6 +552,15 @@
     return String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  // Añade el difuminado del borde derecho solo cuando la tabla realmente
+  // no cabe entera (si no, en pantallas anchas se comería sin motivo la
+  // última columna aunque no hubiera nada más que desplazar).
+  function markScrollable(wrap) {
+    requestAnimationFrame(() => {
+      wrap.classList.toggle("is-scrollable", wrap.scrollWidth > wrap.clientWidth + 1);
+    });
+  }
+
   // "Escudo" de un rival: iniciales sobre un degradado de color fijo para
   // ese nombre (mismo equipo siempre sale con el mismo color).
   function hashHue(str) {
@@ -782,6 +791,7 @@
                   <td>${e.pf}</td><td>${e.pc}</td><td><b>${e.puntos}</b></td>
                 </tr>`).join("")}
               </tbody></table></div>`);
+          markScrollable(container.querySelector(".table-wrap:last-of-type"));
         }
 
         container.insertAdjacentHTML("beforeend", `<div class="section-title">Calendario de liga</div>`);
@@ -1251,6 +1261,7 @@
       });
     });
     view.appendChild(table);
+    markScrollable(table);
     view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL = puntos + rebotes + asistencias + robos + tapones + faltas recibidas − tiros fallados − pérdidas − faltas cometidas.</p>`));
   }
 
@@ -1725,6 +1736,11 @@
   ];
   let seasonMetric = "pts";
   let seasonFinishedOnly = false;
+  // Cada render() reconstruye el DOM entero, así que sin esto el scroll
+  // horizontal de la tabla completa se perdía (volvía a la izquierda) cada
+  // vez que algo en la página disparaba un re-render, p.ej. al cambiar de
+  // pestaña en el ranking de arriba.
+  let seasonTableScrollLeft = 0;
 
   route("/season", (view) => {
     view.appendChild(el(`
@@ -1850,6 +1866,14 @@
     wrap.appendChild(table);
     table.querySelectorAll("tbody tr").forEach(tr => {
       tr.addEventListener("click", () => go("/player/" + tr.dataset.pid));
+    });
+    wrap.addEventListener("scroll", () => { seasonTableScrollLeft = wrap.scrollLeft; });
+    // El wrap todavía no está en el DOM aquí (se añade justo después, en
+    // el caller), así que fijar scrollLeft ahora no tendría efecto —
+    // scrollWidth/clientWidth valen 0 hasta que esté insertado y pintado.
+    requestAnimationFrame(() => {
+      wrap.scrollLeft = seasonTableScrollLeft;
+      wrap.classList.toggle("is-scrollable", wrap.scrollWidth > wrap.clientWidth + 1);
     });
     return wrap;
   }
