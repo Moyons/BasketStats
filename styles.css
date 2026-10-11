@@ -845,7 +845,8 @@ a { color: inherit; text-decoration: none; }
 .leaderboard-row .bar { height: 100%; border-radius: 5px; background: var(--accent-grad); }
 .leaderboard-row .val { font-weight: 800; font-size: 15px; font-family: "Barlow Condensed", sans-serif; color: var(--text-primary); }
 
-.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-m); border: 1px solid var(--border); }
+.table-wrap { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-m); border: 1px solid var(--border); }
+.table-wrap > table { flex-shrink: 0; }
 table.stats-table { border-collapse: collapse; width: 100%; font-size: 12.5px; white-space: nowrap; }
 table.stats-table th, table.stats-table td {
   padding: 10px 10px;
@@ -1074,10 +1075,21 @@ table.standings th:nth-child(2) { text-align: left; }
 /* Difumina el borde derecho en vez de cortar las columnas a lo bruto,
    pero solo cuando la tabla de verdad no cabe entera (si no, en pantallas
    anchas se comería la última columna sin motivo). El izquierdo no hace
-   falta: ahí está la columna fija del jugador, siempre visible. */
-.table-wrap.is-scrollable {
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 22px), transparent 100%);
-  mask-image: linear-gradient(to right, black calc(100% - 22px), transparent 100%);
+   falta: ahí está la columna fija del jugador, siempre visible.
+   Antes era mask-image, pero combinado con contain/isolation/transform
+   en este mismo elemento no se renderizaba fiable en todos los móviles;
+   esto usa solo position:sticky + un degradado de color (igual de fiable
+   que la columna fija del jugador, que sí funciona en todos lados). */
+.table-wrap.is-scrollable::after {
+  content: "";
+  position: sticky;
+  right: 0;
+  align-self: stretch;
+  flex-shrink: 0;
+  width: 22px;
+  margin-left: -22px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--surface-1));
 }
 table.stats-table td:first-child, table.stats-table th:first-child { background-clip: padding-box; }
 /* La fila resaltada (p.ej. nuestro equipo en la clasificación) usa un
