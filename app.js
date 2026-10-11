@@ -973,6 +973,7 @@
     renderLiveGame(view, game);
   });
 
+  let liveStickyObserver = null;
   function renderLiveGame(view, game) {
     const us = teamScore(game);
     const them = game.oppScore || 0;
@@ -1017,7 +1018,21 @@
         <div class="player-strip" id="player-strip" ${isFinal ? "hidden" : ""}></div>
       </div>
     `);
+    // Un centinela justo encima: mientras se ve, la cabecera está en su
+    // sitio (transparente); en cuanto sale por arriba, está pegada y tapa
+    // contenido, así que pasa a tener fondo sólido (.stuck).
+    const sentinel = el(`<div class="live-sentinel"></div>`);
+    view.appendChild(sentinel);
     view.appendChild(sticky);
+    if (liveStickyObserver) liveStickyObserver.disconnect();
+    if ("IntersectionObserver" in window) {
+      liveStickyObserver = new IntersectionObserver(([entry]) => {
+        sticky.classList.toggle("stuck", !entry.isIntersecting && entry.boundingClientRect.top < 0);
+      });
+      liveStickyObserver.observe(sentinel);
+    } else {
+      sticky.classList.add("stuck");
+    }
 
     if (!isFinal) {
       sticky.querySelector("#finish-game-btn").addEventListener("click", () => requireAdmin(() => openFinishGameSheet(game)));

@@ -55,7 +55,11 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+/* body con min-height (no height): su caja crece con el contenido, así el
+   fondo (que solo se pinta dentro de la caja de body) cubre toda la página.
+   Con height:100% el fondo se cortaba en seco al hacer scroll. */
+html { height: 100%; }
+body { min-height: 100%; }
 html { background: var(--page); }
 body {
   margin: 0;
@@ -549,16 +553,20 @@ a { color: inherit; text-decoration: none; }
   position: sticky;
   top: env(safe-area-inset-top);
   z-index: 25;
-  /* backdrop-filter (blur translúcido para integrarse con el fondo
-     animado) no se renderizaba fiable en algunos móviles y se quedaba
-     viendo como un rectángulo plano de todos modos. En vez de perseguir
-     ese efecto, directamente el mismo fondo sólido que ya usan todas las
-     tarjetas de la app (.card) — consistente y sin depender de nada raro. */
-  background: linear-gradient(175deg, var(--surface-2) 0%, var(--surface-1) 55%);
+  /* En reposo es transparente (se ve el fondo de la página, sin ningún
+     rectángulo). Solo cuando el usuario ha hecho scroll y la cabecera
+     está pegada arriba tapando contenido, JS le añade .stuck y entonces
+     sí lleva fondo sólido (si no, el texto de debajo se transparentaría). */
+  background: transparent;
   margin: 0 -16px;
   padding: 0 16px 6px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid transparent;
 }
+.live-sticky.stuck {
+  background: linear-gradient(175deg, var(--surface-2) 0%, var(--surface-1) 55%);
+  border-bottom-color: var(--border);
+}
+.live-sentinel { height: 1px; margin-bottom: -1px; pointer-events: none; }
 .mini-score {
   display: flex;
   align-items: baseline;
