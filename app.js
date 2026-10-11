@@ -1736,6 +1736,7 @@
   ];
   let seasonMetric = "pts";
   let seasonFinishedOnly = false;
+  let pillRowScrollLeft = 0;
   // Cada render() reconstruye el DOM entero, así que sin esto el scroll
   // horizontal de la tabla completa se perdía (volvía a la izquierda) cada
   // vez que algo en la página disparaba un re-render, p.ej. al cambiar de
@@ -1786,9 +1787,13 @@
     view.appendChild(leaderboardChart(rows, seasonMetric));
     // Cada clic reconstruye la vista entera, así que sin esto la fila de
     // pestañas volvería siempre al principio en vez de quedarse donde
-    // estaba el usuario.
-    const activePill = pillRow.querySelector("button.active");
-    if (activePill) activePill.scrollIntoView({ inline: "nearest", block: "nearest" });
+    // estaba el usuario. scrollIntoView no vale: solo garantiza que el
+    // botón quede visible, no que el scroll se quede donde estaba (podía
+    // saltar a otra posición igualmente). Guardamos y restauramos el
+    // valor exacto, después de que la fila esté insertada de verdad (si
+    // no, scrollLeft no tiene efecto porque el ancho aún vale 0).
+    pillRow.addEventListener("scroll", () => { pillRowScrollLeft = pillRow.scrollLeft; });
+    requestAnimationFrame(() => { pillRow.scrollLeft = pillRowScrollLeft; });
 
     // Full stats table
     view.appendChild(el(`<div class="section-title">Tabla completa</div>`));
