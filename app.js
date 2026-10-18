@@ -924,12 +924,11 @@
     cuerpo.appendChild(lista);
   }
 
-  // Jugadores de la liga (jugadores-liga.json): transcrito a mano de la app
-  // Afición FBM (dorsal, minutos, puntos y tiros de 2 anotados de cada
-  // partido). La app recorta los nombres según el ancho de la pantalla, así
-  // que el mismo jugador sale truncado distinto en cada partido; se unen sus
-  // filas cuando un nombre es el principio del otro. Nuestro equipo sale de
-  // los datos propios de la app (partidos de liga ya jugados y enlazados).
+  // Jugadores de la liga (jugadores-liga.json): sacado de los PDF de cada
+  // partido de la app Afición FBM (dorsal, minutos, puntos, T2/T3/TL y +/-).
+  // Un jugador son las filas de un mismo equipo con el mismo nombre; el
+  // dorsal que se muestra es el de su último partido (cambia de un partido
+  // a otro). Se actualiza a mano cuando hay jornadas nuevas.
   let ligaJugData;            // undefined = sin cargar, null = no disponible
   let ligaJugEquipo = "TODOS";
   let ligaJugEquipoScroll = null;
@@ -948,35 +947,27 @@
       .replace(/(^|[\s\-'(])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
   }
 
-  function jugadoresDeLiga(datos, c) {
+  function jugadoresDeLiga(datos) {
     const lista = [];
     datos.tablas.forEach(t => {
       const num = Number((/(\d+)/.exec(t.jornada) || [0, 0])[1]);
-      t.jugadores.forEach(([dorsal, , nombre, min, pts, t2]) => {
+      t.jugadores.forEach(([dorsal, , nombre, min, pts, t2, t3, tlm, tla, pm]) => {
         const k = soloLetras(nombre);
-        let j = lista.find(x => x.equipo === t.equipo && (x.k.startsWith(k) || k.startsWith(x.k)));
-        if (!j) { j = { equipo: t.equipo, k, nombre, dorsal, jorn: num, pj: 0, seg: 0, pts: 0, t2: 0 }; lista.push(j); }
-        if (k.length > j.k.length) { j.k = k; j.nombre = nombre; }
+        let j = lista.find(x => x.equipo === t.equipo && x.k === k);
+        if (!j) { j = { equipo: t.equipo, k, nombre, dorsal, jorn: num, pj: 0, seg: 0, pts: 0, t2: 0, t3: 0, tlm: 0, tla: 0, pm: 0 }; lista.push(j); }
         if (num >= j.jorn) { j.dorsal = dorsal; j.jorn = num; }
         const s = aSegundos(min);
         if (s > 0 || pts > 0) { j.pj++; j.seg += s; }
-        j.pts += pts;
-        j.t2 += t2;
+        j.pts += pts; j.t2 += t2; j.t3 += t3; j.tlm += tlm; j.tla += tla; j.pm += pm;
       });
     });
-    const out = lista.map(j => ({ equipo: j.equipo, nombre: j.nombre, dorsal: j.dorsal, pj: j.pj, minAvg: j.pj ? j.seg / j.pj : null, pts: j.pts, t2: j.t2 }));
-
-    // Nuestro equipo, con los datos de la app
-    const juegos = (c.partidos || []).filter(p => p.jugado).map(findGameForLeagueMatch).filter(g => g && g.events.length);
-    const nuestro = (c.equipo || "CHAVALITROS").toUpperCase();
-    activePlayers().forEach(pl => {
-      const gs = juegos.filter(g => g.events.some(e => e.playerId === pl.id));
-      if (!gs.length) return;
-      const s = aggregate(gs.flatMap(g => playerEventsInGame(g, pl.id)));
-      const mins = gs.map(g => gameMin(g, pl.id)).filter(v => v !== null);
-      out.push({ equipo: nuestro, nombre: pl.name, dorsal: pl.number ?? "", pj: gs.length, minAvg: mins.length ? mins.reduce((a, b) => a + b, 0) / mins.length : null, pts: s.pts, t2: s.p2m });
-    });
-    return out;
+    return lista.map(j => ({ ...j, minAvg: j.pj ? j.seg / j.pj : null }));
+  }
+  // "MIER Y TERAN ROJAS, ARMANDO JAVIER" -> "Mier Y Teran Rojas, A."
+  function nombreCorto(n) {
+    const [ap, pila] = String(n).split(",");
+    const ini = (pila || "").trim().charAt(0);
+    return titulo(ap.trim()) + (ini ? ", " + ini.toUpperCase() + "." : "");
   }
 
   function ligaJugadores(cuerpo, c, container) {
@@ -989,7 +980,7 @@
       cuerpo.appendChild(el(`<p class="hint">No se pudieron cargar los jugadores de la liga.</p>`));
       return;
     }
-    const todos = jugadoresDeLiga(ligaJugData, c);
+    const todos = jugadoresDeLiga(ligaJugData);
     const equipos = (c.clasificacion || []).map(e => e.nombre.toUpperCase());
     todos.forEach(j => { if (!equipos.includes(j.equipo)) equipos.push(j.equipo); });
     if (ligaJugEquipo !== "TODOS" && !equipos.includes(ligaJugEquipo)) ligaJugEquipo = "TODOS";
@@ -1010,16 +1001,20 @@
     const verTodos = ligaJugEquipo === "TODOS";
     const rows = todos.filter(j => verTodos || j.equipo === ligaJugEquipo);
     const wrap = el(`
-      <div class="table-wrap no-fade"><table class="stats-table players">
-        <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th><th>PTS</th><th>TOT</th><th>T2</th></tr></thead>
+      <div class="table-wrap"><table class="stats-table players">
+        <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th><th>PTS</th><th>PTS TOT</th><th>T2</th><th>T3</th><th>TL</th><th>+/-</th><th>+/- TOT</th></tr></thead>
         <tbody>${rows.map(j => `
           <tr>
-            <td data-sort="${esc(titulo(j.nombre))}"><span class="pl-n">${esc(j.dorsal)}</span>${esc(titulo(j.nombre))}${verTodos ? `<small class="pl-team">${esc(j.equipo)}</small>` : ""}</td>
+            <td data-sort="${esc(titulo(j.nombre))}"><span class="pl-n">${esc(j.dorsal)}</span><span class="pl-name">${esc(nombreCorto(j.nombre))}</span>${verTodos ? `<small class="pl-team">${esc(j.equipo)}</small>` : ""}</td>
             <td>${j.pj}</td>
             <td>${j.minAvg === null ? "—" : fmtMinSec(Math.round(j.minAvg))}</td>
             <td>${j.pj ? fmtAvg(j.pts / j.pj) : "—"}</td>
             <td>${j.pts}</td>
             <td>${j.t2}</td>
+            <td>${j.t3}</td>
+            <td class="pct">${shootCell(j.tlm, j.tla)}</td>
+            <td>${j.pj ? fmtSigned(Math.round((j.pm / j.pj) * 10) / 10) : "—"}</td>
+            <td>${j.pj ? fmtSigned(j.pm) : "—"}</td>
           </tr>`).join("")}
         </tbody></table></div>`);
     cuerpo.appendChild(wrap);
