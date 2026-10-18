@@ -369,6 +369,60 @@
   // Porcentaje de tiro con los aciertos/intentos debajo (tabla de partido y de temporada).
   function shootCell(m, a) { return `${pctStr(m, a)}<small>${m}/${a}</small>`; }
 
+  // Ordenar tablas tocando la cabecera de una columna (1er toque: mayor a
+  // menor, 2º: al revés; en "Jugador" empieza de A a Z). El criterio se
+  // recuerda por tabla entre renders. Las filas de equipo (totals-row) se
+  // quedan siempre al final.
+  const tableSort = { season: null, summary: null };
+  function sortValue(cell) {
+    const raw = (cell.childNodes[0] ? cell.childNodes[0].textContent : cell.textContent).trim();
+    const t = raw.match(/^(\d+):(\d{2})$/);
+    if (t) return Number(t[1]) * 60 + Number(t[2]);
+    const n = parseFloat(raw.replace("+", "").replace(",", "."));
+    return isNaN(n) ? null : n;
+  }
+  function applyTableSort(wrap, key) {
+    const table = wrap.querySelector("table");
+    const tbody = table.tBodies[0];
+    const st = tableSort[key];
+    table.querySelectorAll("thead th").forEach((th, i) => {
+      th.classList.add("sortable");
+      th.classList.toggle("sorted-asc", !!st && st.col === i && st.dir === 1);
+      th.classList.toggle("sorted-desc", !!st && st.col === i && st.dir === -1);
+      th.onclick = () => {
+        const cur = tableSort[key];
+        tableSort[key] = cur && cur.col === i ? { col: i, dir: -cur.dir } : { col: i, dir: i === 0 ? 1 : -1 };
+        applyTableSort(wrap, key);
+      };
+    });
+    if (!st) return;
+    const totals = [...tbody.querySelectorAll("tr.totals-row")];
+    const filas = [...tbody.querySelectorAll("tr:not(.totals-row)")];
+    const cmp = (a, b) => {
+      const ca = a.children[st.col], cb = b.children[st.col];
+      if (st.col === 0) return st.dir * ca.textContent.trim().localeCompare(cb.textContent.trim(), "es");
+      const va = sortValue(ca), vb = sortValue(cb);
+      if (va === null && vb === null) return 0;
+      if (va === null) return 1;
+      if (vb === null) return -1;
+      return st.dir * (va - vb);
+    };
+    filas.sort(cmp).forEach(f => tbody.appendChild(f));
+    totals.forEach(f => tbody.appendChild(f));
+  }
+
+  // El difuminado del borde derecho de las tablas solo se ve si hay más
+  // columnas por desplazar: se quita al llegar al final (si no, tapaba la
+  // última columna) o si la tabla cabe entera.
+  function updateTableFade(w) {
+    w.classList.toggle("fade-off", w.scrollWidth <= w.clientWidth + 1 || w.scrollLeft + w.clientWidth >= w.scrollWidth - 2);
+  }
+  function updateAllTableFades() { document.querySelectorAll(".table-wrap").forEach(updateTableFade); }
+  document.addEventListener("scroll", (e) => {
+    if (e.target.classList && e.target.classList.contains("table-wrap")) updateTableFade(e.target);
+  }, true);
+  window.addEventListener("resize", updateAllTableFades);
+
   // Valoración (fórmula habitual de liga, tipo ACB/PIR): suma lo positivo
   // y resta lo negativo. Faltas recibidas no se registran en la app, así
   // que no entran; el resto sí.
@@ -517,6 +571,7 @@
     m.handler(view, m.params);
     updateTabbar(path);
     renderAdminBadge();
+    requestAnimationFrame(updateAllTableFades);
   }
 
   function updateTabbar(path) {
@@ -763,10 +818,15 @@
           const gameProximo = findGameForLeagueMatch(proximo);
           const tag = gameProximo ? "a" : "div";
           const hrefAttr = gameProximo ? ` href="#/game/${gameProximo.id}"` : "";
+          const filaRival = (c.clasificacion || []).find(e => e.nombre.toUpperCase() === (proximo.rival || "").toUpperCase());
+          const rivalInfo = filaRival
+            ? `<div class="game-meta rival-info">Puesto <b>${filaRival.puesto}º</b> · <span class="rv-w">${filaRival.pg}V</span> <span class="rv-l">${filaRival.pp}D</span></div>`
+            : "";
           container.insertAdjacentHTML("beforeend", `
             <div class="section-title">Próximo partido de liga</div>
             <${tag} class="card next-match ${gameProximo ? "linked" : ""}"${hrefAttr}>
               <div class="game-vs">${crestHtml(proximo.rival, "sm")}${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
+              ${rivalInfo}
               <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
               <div class="game-meta">${formatCampo(proximo.campo)}</div>
               ${gameProximo ? `<div class="cal-link-hint">Ver estadísticas <svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>` : ""}
@@ -774,15 +834,53 @@
         }
 
         if (Array.isArray(c.clasificacion) && c.clasificacion.length) {
+          const nEq = c.clasificacion.length;
+          // 1º en un color, 2º y 3º en otro, y los dos últimos en otro.
+          const posClass = (e) => nEq < 6 ? "" : e.puesto === 1 ? "pos-1" : (e.puesto === 2 || e.puesto === 3) ? "pos-top" : e.puesto > nEq - 2 ? "pos-bottom" : "";
           container.insertAdjacentHTML("beforeend", `<div class="section-title">Clasificación</div>
             <div class="table-wrap"><table class="stats-table standings">
               <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PP</th><th>PF</th><th>PC</th><th>Pts</th></tr></thead>
               <tbody>${c.clasificacion.map(e => `
-                <tr class="${e.nombre.toUpperCase() === (c.equipo || "").toUpperCase() ? "selected" : ""}">
+                <tr class="${[e.nombre.toUpperCase() === (c.equipo || "").toUpperCase() ? "selected" : "", posClass(e)].join(" ").trim()}">
                   <td>${e.puesto ?? ""}</td><td><span class="standings-team">${crestHtml(e.nombre, "sm")}${esc(e.nombre)}</span></td><td>${e.pj}</td><td>${e.pg}</td><td>${e.pp}</td>
                   <td>${e.pf}</td><td>${e.pc}</td><td><b>${e.puntos}</b></td>
                 </tr>`).join("")}
               </tbody></table></div>`);
+          const tablaClasif = container.querySelector("table.standings");
+          tablaClasif.querySelectorAll("tbody tr").forEach(tr => {
+            tr.addEventListener("click", () => {
+              const estaba = tr.classList.contains("picked");
+              tablaClasif.querySelectorAll("tr.picked").forEach(x => x.classList.remove("picked"));
+              if (!estaba) tr.classList.add("picked");
+            });
+          });
+        }
+
+        // Resultados de los partidos ya jugados de todos los equipos del grupo.
+        const jugadosGrupo = (c.partidosGrupo || []).filter(p => p.jugado);
+        if (jugadosGrupo.length) {
+          container.insertAdjacentHTML("beforeend", `<div class="section-title">Resultados del grupo</div>`);
+          const porJornada = new Map();
+          jugadosGrupo.forEach(p => {
+            if (!porJornada.has(p.jornada)) porJornada.set(p.jornada, []);
+            porJornada.get(p.jornada).push(p);
+          });
+          const miEquipo = (c.equipo || "").toUpperCase();
+          const tarjeta = el(`<div class="card group-results"></div>`);
+          [...porJornada.entries()].reverse().forEach(([jornada, ps]) => {
+            tarjeta.appendChild(el(`<div class="gr-jornada">${esc(jornada)}</div>`));
+            ps.forEach(p => {
+              const ganaLocal = p.puntosLocal > p.puntosVisitante;
+              const nombre = (n, gana) => `<span class="gr-team ${gana ? "win" : ""} ${n.toUpperCase() === miEquipo ? "mine" : ""}">${esc(n)}</span>`;
+              tarjeta.appendChild(el(`
+                <div class="gr-row">
+                  ${nombre(p.local, ganaLocal)}
+                  <span class="gr-score tabular">${p.puntosLocal} - ${p.puntosVisitante}</span>
+                  ${nombre(p.visitante, !ganaLocal)}
+                </div>`));
+            });
+          });
+          container.appendChild(tarjeta);
         }
 
         container.insertAdjacentHTML("beforeend", `<div class="section-title">Calendario de liga</div>`);
@@ -813,6 +911,7 @@
         });
         container.appendChild(lista);
         container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}. Se revisa cada semana automáticamente.</p>`));
+        requestAnimationFrame(updateAllTableFades);
       })
       .catch(() => {
         container.innerHTML = "";
@@ -1267,7 +1366,8 @@
       });
     });
     view.appendChild(table);
-    view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL = puntos + rebotes + asistencias + robos + tapones + faltas recibidas − tiros fallados − pérdidas − faltas cometidas.</p>`));
+    applyTableSort(table, "summary");
+    view.appendChild(el(`<p class="hint" style="margin-top:10px">VAL =puntos + rebotes + asistencias + robos + tapones + faltas recibidas − tiros fallados − pérdidas − faltas cometidas.</p>`));
   }
 
   function shortName(name) {
@@ -1789,7 +1889,11 @@
       pillRow.appendChild(b);
     });
     view.appendChild(pillRow);
-    view.appendChild(leaderboardChart(rows, seasonMetric));
+    // Para salir en el ranking hay que haber jugado al menos el 50% de los
+    // partidos del equipo.
+    const partidosEquipo = DB.games.filter(g => (!seasonFinishedOnly || g.status === "final") && g.events.length).length;
+    const rowsRanking = rows.filter(r => r.gp >= partidosEquipo * 0.5);
+    view.appendChild(leaderboardChart(rowsRanking, seasonMetric));
     // Cada clic reconstruye la vista entera, así que sin esto la fila de
     // pestañas volvería siempre al principio en vez de quedarse donde
     // estaba el usuario. scrollIntoView no vale: solo garantiza que el
@@ -1831,7 +1935,7 @@
       `);
       card.appendChild(row);
     });
-    const cap = el(`<div class="hint" style="margin-top:10px">${esc(metric.caption)}</div>`);
+    const cap = el(`<div class="hint" style="margin-top:10px">${esc(metric.caption)} · mínimo 50% de partidos jugados</div>`);
     card.appendChild(cap);
     return card;
   }
@@ -1839,6 +1943,38 @@
   function statsTable(rows) {
     const sorted = [...rows].sort((a, b) => b.s.pts - a.s.pts);
     const wrap = el(`<div class="table-wrap"></div>`);
+
+    // Fila "Equipo": cada columna a nivel de equipo (medias por partido del
+    // conjunto de jugadores; +/- = diferencia de puntos con el rival).
+    const partidosT = DB.games.filter(g => (!seasonFinishedOnly || g.status === "final") && g.events.length);
+    let teamRowHtml = "";
+    if (partidosT.length) {
+      const nT = partidosT.length;
+      const ts = aggregate(partidosT.flatMap(g => g.events));
+      const segundos = partidosT.reduce((a, g) => a + Object.values(g.min || {}).reduce((x, v) => x + (typeof v === "number" ? v : 0), 0), 0);
+      const conRival = partidosT.filter(g => typeof g.oppScore === "number");
+      const difTot = conRival.reduce((a, g) => a + (teamScore(g) - g.oppScore), 0);
+      const difAvg = conRival.length ? difTot / conRival.length : null;
+      teamRowHtml = `
+            <tr class="totals-row">
+              <td>Equipo</td>
+              <td>${nT}</td>
+              <td>${segundos ? fmtMinSec(Math.round(segundos / nT)) : "—"}</td>
+              <td>${fmtAvg(avg(ts.pts, nT))}</td>
+              <td>${fmtAvg(avg(ts.reb, nT))}</td>
+              <td>${fmtAvg(avg(ts.ast, nT))}</td>
+              <td>${fmtAvg(avg(ts.stl, nT))}</td>
+              <td>${fmtAvg(avg(ts.blk, nT))}</td>
+              <td>${fmtAvg(avg(ts.tov, nT))}</td>
+              <td>${fmtAvg(avg(valoracion(ts), nT))}</td>
+              <td>${difAvg === null ? "—" : fmtSigned(Math.round(difAvg * 10) / 10)}</td>
+              <td>${conRival.length ? fmtSigned(difTot) : "—"}</td>
+              <td class="pct">${shootCell(ts.fgm, ts.fga)}</td>
+              <td class="pct">${shootCell(ts.p2m, ts.p2a)}</td>
+              <td class="pct">${shootCell(ts.p3m, ts.p3a)}</td>
+              <td class="pct">${shootCell(ts.ftm, ts.fta)}</td>
+            </tr>`;
+    }
     const table = el(`
       <table class="stats-table">
         <thead>
@@ -1870,13 +2006,15 @@
               <td class="pct">${shootCell(r.s.ftm, r.s.fta)}</td>
             </tr>
           `; }).join("")}
+          ${teamRowHtml}
         </tbody>
       </table>
     `);
     wrap.appendChild(table);
-    table.querySelectorAll("tbody tr").forEach(tr => {
+    table.querySelectorAll("tbody tr[data-pid]").forEach(tr => {
       tr.addEventListener("click", () => go("/player/" + tr.dataset.pid));
     });
+    applyTableSort(wrap, "season");
     wrap.addEventListener("scroll", () => { seasonTableScrollLeft = wrap.scrollLeft; });
     // El wrap todavía no está en el DOM aquí (se añade justo después, en
     // el caller), así que fijar scrollLeft ahora no tendría efecto —

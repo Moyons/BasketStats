@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-10-18T16:36:41.397Z",
+  "actualizado": "2026-10-18T21:57:15.601Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
   "clasificacion": [
@@ -373,6 +373,998 @@
       "puntosLocal": null,
       "puntosVisitante": null,
       "campo": "MORATALAZ P1c/ VALDEBERNARDO, 2 28030, Madrid",
+      "jugado": false
+    }
+  ],
+  "partidosGrupo": [
+    {
+      "jornada": "Jornada 1",
+      "fecha": "2026-10-04T09:00",
+      "local": "LITROS DE MAHOU",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": 49,
+      "puntosVisitante": 44,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 1",
+      "fecha": "2026-10-04T10:15",
+      "local": "TROPICALEROS",
+      "visitante": "WILD BOYS",
+      "puntosLocal": 59,
+      "puntosVisitante": 23,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 1",
+      "fecha": "2026-10-04T11:30",
+      "local": "CHAVALITROS",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": 56,
+      "puntosVisitante": 16,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 1",
+      "fecha": "2026-10-04T12:45",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "NABUCO TD",
+      "puntosLocal": 38,
+      "puntosVisitante": 49,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 1",
+      "fecha": "2026-10-04T14:00",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "MDA",
+      "puntosLocal": 14,
+      "puntosVisitante": 62,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 2",
+      "fecha": "2026-10-18T09:00",
+      "local": "RIF",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": 44,
+      "puntosVisitante": 55,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 2",
+      "fecha": "2026-10-18T10:15",
+      "local": "MDA",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": 74,
+      "puntosVisitante": 17,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 2",
+      "fecha": "2026-10-18T11:30",
+      "local": "NABUCO TD",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": 58,
+      "puntosVisitante": 25,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 2",
+      "fecha": "2026-10-18T12:45",
+      "local": "VALLEKAS BASKET",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": 29,
+      "puntosVisitante": 77,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 2",
+      "fecha": "2026-10-18T14:00",
+      "local": "WILD BOYS",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": 11,
+      "puntosVisitante": 44,
+      "jugado": true
+    },
+    {
+      "jornada": "Jornada 3",
+      "fecha": "2026-10-25T09:00",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 3",
+      "fecha": "2026-10-25T10:15",
+      "local": "CHAVALITROS",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 3",
+      "fecha": "2026-10-25T11:30",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 3",
+      "fecha": "2026-10-25T12:45",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 3",
+      "fecha": "2026-10-25T14:00",
+      "local": "LITROS DE MAHOU",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 4",
+      "fecha": "2026-11-08T09:00",
+      "local": "TROPICALEROS",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 4",
+      "fecha": "2026-11-08T10:15",
+      "local": "NABUCO TD",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 4",
+      "fecha": "2026-11-08T11:30",
+      "local": "VALLEKAS BASKET",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 4",
+      "fecha": "2026-11-08T12:45",
+      "local": "WILD BOYS",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 4",
+      "fecha": "2026-11-08T14:00",
+      "local": "RIF",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 5",
+      "fecha": "2026-11-15T09:00",
+      "local": "MDA",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 5",
+      "fecha": "2026-11-15T10:15",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 5",
+      "fecha": "2026-11-15T11:30",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 5",
+      "fecha": "2026-11-15T12:45",
+      "local": "LITROS DE MAHOU",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 5",
+      "fecha": "2026-11-15T14:00",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 6",
+      "fecha": "2026-11-22T09:00",
+      "local": "CHAVALITROS",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 6",
+      "fecha": "2026-11-22T10:15",
+      "local": "VALLEKAS BASKET",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 6",
+      "fecha": "2026-11-22T11:30",
+      "local": "WILD BOYS",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 6",
+      "fecha": "2026-11-22T12:45",
+      "local": "RIF",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 6",
+      "fecha": "2026-11-22T14:00",
+      "local": "TROPICALEROS",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 7",
+      "fecha": "2026-11-29T09:00",
+      "local": "NABUCO TD",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 7",
+      "fecha": "2026-11-29T10:15",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 7",
+      "fecha": "2026-11-29T11:30",
+      "local": "LITROS DE MAHOU",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 7",
+      "fecha": "2026-11-29T12:45",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 7",
+      "fecha": "2026-11-29T14:00",
+      "local": "MDA",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 8",
+      "fecha": "2026-12-13T09:00",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 8",
+      "fecha": "2026-12-13T10:15",
+      "local": "WILD BOYS",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 8",
+      "fecha": "2026-12-13T11:30",
+      "local": "RIF",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 8",
+      "fecha": "2026-12-13T12:45",
+      "local": "TROPICALEROS",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 8",
+      "fecha": "2026-12-13T14:00",
+      "local": "CHAVALITROS",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 9",
+      "fecha": "2027-01-10T09:00",
+      "local": "VALLEKAS BASKET",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 9",
+      "fecha": "2027-01-10T10:15",
+      "local": "LITROS DE MAHOU",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 9",
+      "fecha": "2027-01-10T11:30",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 9",
+      "fecha": "2027-01-10T14:00",
+      "local": "NABUCO TD",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 10",
+      "fecha": "2027-01-17T09:00",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 10",
+      "fecha": "2027-01-17T10:15",
+      "local": "RIF",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 10",
+      "fecha": "2027-01-17T11:30",
+      "local": "TROPICALEROS",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 10",
+      "fecha": "2027-01-17T12:45",
+      "local": "CHAVALITROS",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 10",
+      "fecha": "2027-01-17T14:00",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 11",
+      "fecha": "2027-01-24T09:00",
+      "local": "WILD BOYS",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 11",
+      "fecha": "2027-01-24T10:15",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 11",
+      "fecha": "2027-01-24T11:30",
+      "local": "MDA",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 11",
+      "fecha": "2027-01-24T12:45",
+      "local": "NABUCO TD",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 11",
+      "fecha": "2027-01-24T14:00",
+      "local": "VALLEKAS BASKET",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 12",
+      "fecha": "2027-01-31T09:00",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 12",
+      "fecha": "2027-01-31T10:15",
+      "local": "WILD BOYS",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 12",
+      "fecha": "2027-01-31T11:30",
+      "local": "VALLEKAS BASKET",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 12",
+      "fecha": "2027-01-31T12:45",
+      "local": "NABUCO TD",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 12",
+      "fecha": "2027-01-31T14:00",
+      "local": "MDA",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 13",
+      "fecha": "2027-02-07T09:00",
+      "local": "TROPICALEROS",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 13",
+      "fecha": "2027-02-07T10:15",
+      "local": "LITROS DE MAHOU",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 13",
+      "fecha": "2027-02-07T11:30",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 13",
+      "fecha": "2027-02-07T12:45",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 13",
+      "fecha": "2027-02-07T14:00",
+      "local": "CHAVALITROS",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 14",
+      "fecha": "2027-02-21T09:00",
+      "local": "MDA",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 14",
+      "fecha": "2027-02-21T10:15",
+      "local": "RIF",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 14",
+      "fecha": "2027-02-21T11:30",
+      "local": "WILD BOYS",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 14",
+      "fecha": "2027-02-21T12:45",
+      "local": "VALLEKAS BASKET",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 14",
+      "fecha": "2027-02-21T14:00",
+      "local": "NABUCO TD",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 15",
+      "fecha": "2027-02-28T09:00",
+      "local": "CHAVALITROS",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 15",
+      "fecha": "2027-02-28T10:15",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 15",
+      "fecha": "2027-02-28T11:30",
+      "local": "LITROS DE MAHOU",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 15",
+      "fecha": "2027-02-28T12:45",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 15",
+      "fecha": "2027-02-28T14:00",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 16",
+      "fecha": "2027-03-07T09:00",
+      "local": "NABUCO TD",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 16",
+      "fecha": "2027-03-07T10:15",
+      "local": "TROPICALEROS",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 16",
+      "fecha": "2027-03-07T11:30",
+      "local": "RIF",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 16",
+      "fecha": "2027-03-07T12:45",
+      "local": "WILD BOYS",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 16",
+      "fecha": "2027-03-07T14:00",
+      "local": "VALLEKAS BASKET",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 17",
+      "fecha": "2027-03-14T09:00",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 17",
+      "fecha": "2027-03-14T10:15",
+      "local": "MDA",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 17",
+      "fecha": "2027-03-14T11:30",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 17",
+      "fecha": "2027-03-14T12:45",
+      "local": "LITROS DE MAHOU",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 17",
+      "fecha": "2027-03-14T14:00",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 18",
+      "fecha": "2027-04-04T09:00",
+      "local": "VALLEKAS BASKET",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 18",
+      "fecha": "2027-04-04T10:15",
+      "local": "CHAVALITROS",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 18",
+      "fecha": "2027-04-04T11:30",
+      "local": "TROPICALEROS",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 18",
+      "fecha": "2027-04-04T12:45",
+      "local": "RIF",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 18",
+      "fecha": "2027-04-04T14:00",
+      "local": "WILD BOYS",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 19",
+      "fecha": "2027-04-11T09:00",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 19",
+      "fecha": "2027-04-11T10:15",
+      "local": "NABUCO TD",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 19",
+      "fecha": "2027-04-11T11:30",
+      "local": "MDA",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 19",
+      "fecha": "2027-04-11T12:45",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 19",
+      "fecha": "2027-04-11T14:00",
+      "local": "LITROS DE MAHOU",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 20",
+      "fecha": "2027-04-18T09:00",
+      "local": "WILD BOYS",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 20",
+      "fecha": "2027-04-18T10:15",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "LITROS DE MAHOU",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 20",
+      "fecha": "2027-04-18T11:30",
+      "local": "CHAVALITROS",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 20",
+      "fecha": "2027-04-18T12:45",
+      "local": "TROPICALEROS",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 20",
+      "fecha": "2027-04-18T14:00",
+      "local": "RIF",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 21",
+      "fecha": "2027-04-25T09:00",
+      "local": "LITROS DE MAHOU",
+      "visitante": "ENFERMOS DEL ARO",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 21",
+      "fecha": "2027-04-25T10:15",
+      "local": "VALLEKAS BASKET",
+      "visitante": "RIF",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 21",
+      "fecha": "2027-04-25T11:30",
+      "local": "NABUCO TD",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 21",
+      "fecha": "2027-04-25T12:45",
+      "local": "MDA",
+      "visitante": "CHAVALITROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 21",
+      "fecha": "2027-04-25T14:00",
+      "local": "LOS KHINKIS RUSOS",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 22",
+      "fecha": "2027-05-09T09:00",
+      "local": "RIF",
+      "visitante": "WILD BOYS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 22",
+      "fecha": "2027-05-09T10:15",
+      "local": "ENFERMOS DEL ARO",
+      "visitante": "LOS KHINKIS RUSOS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 22",
+      "fecha": "2027-05-09T11:30",
+      "local": "CHUPITIMANGUIS",
+      "visitante": "MDA",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 22",
+      "fecha": "2027-05-09T12:45",
+      "local": "CHAVALITROS",
+      "visitante": "NABUCO TD",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 22",
+      "fecha": "2027-05-09T14:00",
+      "local": "TROPICALEROS",
+      "visitante": "VALLEKAS BASKET",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 9",
+      "fecha": "2027-12-10T12:45",
+      "local": "MDA",
+      "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
       "jugado": false
     }
   ]

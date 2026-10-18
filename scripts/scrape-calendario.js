@@ -122,6 +122,24 @@ async function scrapeGrupo() {
     })
     .sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
 
+  // Todos los partidos del grupo (no solo los de Chavalitros), para poder
+  // ver los resultados de los demás equipos.
+  const partidosGrupo = todos
+    .filter(p => !/DESCANSA/i.test(p.local + p.visitante))
+    .map(p => {
+      const jugado = p.puntosLocal !== "" && p.puntosVisitante !== "";
+      return {
+        jornada: p.jornada,
+        fecha: fechaISO(p.fechaTexto),
+        local: p.local,
+        visitante: p.visitante,
+        puntosLocal: jugado ? Number(p.puntosLocal) : null,
+        puntosVisitante: jugado ? Number(p.puntosVisitante) : null,
+        jugado,
+      };
+    })
+    .sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
+
   const salida = {
     actualizado: new Date().toISOString(),
     equipo: EQUIPO,
@@ -137,6 +155,7 @@ async function scrapeGrupo() {
       puntos: Number(f["Puntos"]) || 0,
     })),
     partidos,
+    partidosGrupo,
   };
   const destino = path.join(__dirname, "..", "calendario.json");
   fs.writeFileSync(destino, JSON.stringify(salida, null, 2) + "\n");

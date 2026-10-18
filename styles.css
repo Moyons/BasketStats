@@ -1134,3 +1134,49 @@ table.stats-table tbody tr.selected td:first-child { background: #3b2921; color:
   font-size: 12.5px; font-weight: 700; color: var(--accent);
 }
 .cal-link-hint svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.3; }
+
+/* =========================================================
+   Tablas: ordenar por columna, colores por posición y selección de fila
+   (al final del archivo a propósito: tiene que ganar a las reglas de arriba)
+   ========================================================= */
+table.stats-table th.sortable { cursor: pointer; -webkit-user-select: none; user-select: none; }
+table.stats-table th.sorted-asc::after,
+table.stats-table th.sorted-desc::after { font-size: 8px; color: var(--accent); margin-left: 3px; }
+table.stats-table th.sorted-asc::after { content: "▲"; }
+table.stats-table th.sorted-desc::after { content: "▼"; }
+
+/* El difuminado del borde derecho se quita al llegar al final o si cabe todo */
+.table-wrap.fade-off::after { display: none; }
+
+/* Clasificación: 1º, 2º-3º y los dos últimos. Colores planos y opacos (iguales
+   en la fila y en la columna fija) para que no haya costura al desplazar. */
+table.stats-table tbody tr.pos-1, table.stats-table tbody tr.pos-1 td:first-child { background: #2c2715; }
+table.stats-table tbody tr.pos-top, table.stats-table tbody tr.pos-top td:first-child { background: #14291d; }
+table.stats-table tbody tr.pos-bottom, table.stats-table tbody tr.pos-bottom td:first-child { background: #2b1618; }
+table.stats-table tbody tr.pos-1 td:first-child { color: var(--gold); box-shadow: inset 3px 0 0 var(--gold); }
+table.stats-table tbody tr.pos-top td:first-child { color: #3fcf7a; box-shadow: inset 3px 0 0 #3fcf7a; }
+table.stats-table tbody tr.pos-bottom td:first-child { color: var(--critical); box-shadow: inset 3px 0 0 var(--critical); }
+
+/* Fila de nuestro equipo / fila seleccionada: el mismo color en TODA la línea */
+table.stats-table tbody tr.selected, table.stats-table tbody tr.selected td, table.stats-table tbody tr.selected td:first-child { background: #3b2921; }
+table.stats-table tbody tr.picked, table.stats-table tbody tr.picked td, table.stats-table tbody tr.picked td:first-child { background: #22314d; }
+table.stats-table tbody tr.picked td:first-child { color: #9ec5f4; }
+/* Al pulsar una fila, toda la línea cambia de color (también la columna fija) */
+table.stats-table tbody tr:active, table.stats-table tbody tr:active td, table.stats-table tbody tr:active td:first-child { background: var(--surface-3) !important; }
+
+/* Próximo partido: puesto y registro del rival */
+.rival-info { margin-top: 6px; }
+.rival-info b { color: var(--text-primary); }
+.rival-info .rv-w { color: var(--good); font-weight: 700; }
+.rival-info .rv-l { color: var(--critical); font-weight: 700; }
+
+/* Resultados del grupo */
+.group-results .gr-jornada { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin: 12px 0 6px; }
+.group-results .gr-jornada:first-child { margin-top: 0; }
+.gr-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.gr-row:last-child { border-bottom: none; }
+.gr-row .gr-team { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); }
+.gr-row .gr-team:first-child { text-align: right; }
+.gr-row .gr-team.win { color: var(--text-primary); font-weight: 700; }
+.gr-row .gr-team.mine { color: var(--accent-2); }
+.gr-row .gr-score { font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 17px; color: var(--text-primary); }
