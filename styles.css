@@ -1196,3 +1196,13 @@ table.stats-table tbody tr.mine:not(.pos-1):not(.pos-top):not(.pos-bottom) td:fi
 table.standings th, table.standings td { padding: 10px 6px; }
 .gr-row { gap: 8px; }
 .gr-row .gr-team { font-size: 12px; }
+
+/* Liga > Jugadores */
+table.players { font-size: 12px; }
+table.players th, table.players td { padding: 9px 6px; }
+table.players td:first-child { min-width: 132px; }
+.pl-n { display: inline-block; min-width: 22px; margin-right: 6px; text-align: right; color: var(--accent); font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 14px; }
+small.pl-team { display: block; margin-left: 28px; font-size: 10px; font-weight: 600; color: var(--text-muted); }
+.pill-toggle.fill button { padding-left: 9px; padding-right: 9px; font-size: 12.5px; }
+.pill-toggle.fill { gap: 5px; }
+.pill-toggle.fill button { flex: 1 1 auto; padding-left: 6px; padding-right: 6px; font-size: 12px; letter-spacing: -0.1px; }

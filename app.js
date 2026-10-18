@@ -373,7 +373,7 @@
   // menor, 2º: al revés; en "Jugador" empieza de A a Z). El criterio se
   // recuerda por tabla entre renders. Las filas de equipo (totals-row) se
   // quedan siempre al final.
-  const tableSort = { season: null, summary: null };
+  const tableSort = { season: null, summary: null, liga: { col: 3, dir: -1 } };
   function sortValue(cell) {
     const raw = (cell.childNodes[0] ? cell.childNodes[0].textContent : cell.textContent).trim();
     const t = raw.match(/^(\d+):(\d{2})$/);
@@ -400,7 +400,7 @@
     const filas = [...tbody.querySelectorAll("tr:not(.totals-row)")];
     const cmp = (a, b) => {
       const ca = a.children[st.col], cb = b.children[st.col];
-      if (st.col === 0) return st.dir * ca.textContent.trim().localeCompare(cb.textContent.trim(), "es");
+      if (st.col === 0) return st.dir * (ca.dataset.sort ?? ca.textContent).trim().localeCompare((cb.dataset.sort ?? cb.textContent).trim(), "es");
       const va = sortValue(ca), vb = sortValue(cb);
       if (va === null && vb === null) return 0;
       if (va === null) return 1;
@@ -848,7 +848,7 @@
     }
 
     const pills = el(`<div class="pill-toggle fill" style="margin-top:18px"></div>`);
-    [["clasif", "Clasificación"], ["calendario", "Calendario"], ["jornadas", "Jornadas"]].forEach(([k, label]) => {
+    [["clasif", "Clasificación"], ["calendario", "Calendario"], ["jornadas", "Jornadas"], ["jugadores", "Jugadores"]].forEach(([k, label]) => {
       const b = el(`<button type="button" class="${ligaTab === k ? "active" : ""}">${label}</button>`);
       b.addEventListener("click", () => { ligaTab = k; pintarLiga(container); });
       pills.appendChild(b);
@@ -859,9 +859,11 @@
     container.appendChild(cuerpo);
     if (ligaTab === "clasif") ligaClasificacion(cuerpo, c);
     else if (ligaTab === "calendario") ligaCalendario(cuerpo, partidos);
+    else if (ligaTab === "jugadores") ligaJugadores(cuerpo, c, container);
     else ligaJornadas(cuerpo, c, container);
 
-    container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}.</p>`));
+    const fechaAct = ligaTab === "jugadores" && ligaJugData ? ligaJugData.actualizado : c.actualizado;
+    container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(fechaAct).toLocaleDateString("es-ES")}.</p>`));
     requestAnimationFrame(updateAllTableFades);
   }
 
@@ -920,6 +922,108 @@
         </${tag}>`));
     });
     cuerpo.appendChild(lista);
+  }
+
+  // Jugadores de la liga (jugadores-liga.json): transcrito a mano de la app
+  // Afición FBM (dorsal, minutos, puntos y tiros de 2 anotados de cada
+  // partido). La app recorta los nombres según el ancho de la pantalla, así
+  // que el mismo jugador sale truncado distinto en cada partido; se unen sus
+  // filas cuando un nombre es el principio del otro. Nuestro equipo sale de
+  // los datos propios de la app (partidos de liga ya jugados y enlazados).
+  let ligaJugData;            // undefined = sin cargar, null = no disponible
+  let ligaJugEquipo = "TODOS";
+  let ligaJugEquipoScroll = null;
+
+  function cargarJugadoresLiga() {
+    if (ligaJugData !== undefined) return Promise.resolve(ligaJugData);
+    return fetch("jugadores-liga.json", { cache: "no-store" })
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(d => (ligaJugData = d))
+      .catch(() => (ligaJugData = null));
+  }
+  const soloLetras = (n) => n.replace(/…/g, "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
+  const aSegundos = (s) => { const m = /^(\d+):(\d{2})$/.exec(s); return m ? Number(m[1]) * 60 + Number(m[2]) : 0; };
+  function titulo(s) {
+    return String(s).toLowerCase().replace(/\s+,/g, ",").replace(/\s+…/g, "…").replace(/\s+/g, " ").trim()
+      .replace(/(^|[\s\-'(])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  }
+
+  function jugadoresDeLiga(datos, c) {
+    const lista = [];
+    datos.tablas.forEach(t => {
+      const num = Number((/(\d+)/.exec(t.jornada) || [0, 0])[1]);
+      t.jugadores.forEach(([dorsal, , nombre, min, pts, t2]) => {
+        const k = soloLetras(nombre);
+        let j = lista.find(x => x.equipo === t.equipo && (x.k.startsWith(k) || k.startsWith(x.k)));
+        if (!j) { j = { equipo: t.equipo, k, nombre, dorsal, jorn: num, pj: 0, seg: 0, pts: 0, t2: 0 }; lista.push(j); }
+        if (k.length > j.k.length) { j.k = k; j.nombre = nombre; }
+        if (num >= j.jorn) { j.dorsal = dorsal; j.jorn = num; }
+        const s = aSegundos(min);
+        if (s > 0 || pts > 0) { j.pj++; j.seg += s; }
+        j.pts += pts;
+        j.t2 += t2;
+      });
+    });
+    const out = lista.map(j => ({ equipo: j.equipo, nombre: j.nombre, dorsal: j.dorsal, pj: j.pj, minAvg: j.pj ? j.seg / j.pj : null, pts: j.pts, t2: j.t2 }));
+
+    // Nuestro equipo, con los datos de la app
+    const juegos = (c.partidos || []).filter(p => p.jugado).map(findGameForLeagueMatch).filter(g => g && g.events.length);
+    const nuestro = (c.equipo || "CHAVALITROS").toUpperCase();
+    activePlayers().forEach(pl => {
+      const gs = juegos.filter(g => g.events.some(e => e.playerId === pl.id));
+      if (!gs.length) return;
+      const s = aggregate(gs.flatMap(g => playerEventsInGame(g, pl.id)));
+      const mins = gs.map(g => gameMin(g, pl.id)).filter(v => v !== null);
+      out.push({ equipo: nuestro, nombre: pl.name, dorsal: pl.number ?? "", pj: gs.length, minAvg: mins.length ? mins.reduce((a, b) => a + b, 0) / mins.length : null, pts: s.pts, t2: s.p2m });
+    });
+    return out;
+  }
+
+  function ligaJugadores(cuerpo, c, container) {
+    if (ligaJugData === undefined) {
+      cuerpo.appendChild(el(`<p class="hint">Cargando jugadores…</p>`));
+      cargarJugadoresLiga().then(() => { if (ligaTab === "jugadores" && container.isConnected) pintarLiga(container); });
+      return;
+    }
+    if (!ligaJugData) {
+      cuerpo.appendChild(el(`<p class="hint">No se pudieron cargar los jugadores de la liga.</p>`));
+      return;
+    }
+    const todos = jugadoresDeLiga(ligaJugData, c);
+    const equipos = (c.clasificacion || []).map(e => e.nombre.toUpperCase());
+    todos.forEach(j => { if (!equipos.includes(j.equipo)) equipos.push(j.equipo); });
+    if (ligaJugEquipo !== "TODOS" && !equipos.includes(ligaJugEquipo)) ligaJugEquipo = "TODOS";
+
+    const fila = el(`<div class="pill-toggle" style="margin-top:12px"></div>`);
+    [["TODOS", "Todos"], ...equipos.map(e => [e, e])].forEach(([k, label]) => {
+      const b = el(`<button type="button" class="${k === ligaJugEquipo ? "active" : ""}">${esc(label)}</button>`);
+      b.addEventListener("click", () => { ligaJugEquipo = k; pintarLiga(container); });
+      fila.appendChild(b);
+    });
+    fila.addEventListener("scroll", () => { ligaJugEquipoScroll = fila.scrollLeft; });
+    cuerpo.appendChild(fila);
+    requestAnimationFrame(() => {
+      if (ligaJugEquipoScroll === null) fila.querySelector("button.active").scrollIntoView({ inline: "center", block: "nearest" });
+      else fila.scrollLeft = ligaJugEquipoScroll;
+    });
+
+    const verTodos = ligaJugEquipo === "TODOS";
+    const rows = todos.filter(j => verTodos || j.equipo === ligaJugEquipo);
+    const wrap = el(`
+      <div class="table-wrap no-fade"><table class="stats-table players">
+        <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th><th>PTS</th><th>TOT</th><th>T2</th></tr></thead>
+        <tbody>${rows.map(j => `
+          <tr>
+            <td data-sort="${esc(titulo(j.nombre))}"><span class="pl-n">${esc(j.dorsal)}</span>${esc(titulo(j.nombre))}${verTodos ? `<small class="pl-team">${esc(j.equipo)}</small>` : ""}</td>
+            <td>${j.pj}</td>
+            <td>${j.minAvg === null ? "—" : fmtMinSec(Math.round(j.minAvg))}</td>
+            <td>${j.pj ? fmtAvg(j.pts / j.pj) : "—"}</td>
+            <td>${j.pts}</td>
+            <td>${j.t2}</td>
+          </tr>`).join("")}
+        </tbody></table></div>`);
+    cuerpo.appendChild(wrap);
+    applyTableSort(wrap, "liga");
   }
 
   // Jornadas: selector de jornada y todos los partidos de esa jornada

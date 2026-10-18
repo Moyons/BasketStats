@@ -57,5 +57,5 @@ jobs:
         run: |
           if [ -z "$SURGE_TOKEN" ]; then echo "Sin SURGE_TOKEN: no se publica"; exit 0; fi
           mkdir -p dist
-          cp index.html styles.css app.js manifest.webmanifest icon-512.png logo-chavalitros-trim.png sw.js calendario.json dist/
+          cp index.html styles.css app.js manifest.webmanifest icon-512.png logo-chavalitros-trim.png sw.js calendario.json jugadores-liga.json dist/
           npx --yes surge dist chavalitros-basket.surge.sh
