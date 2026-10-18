@@ -827,7 +827,9 @@
     const proximo = partidos.find(p => !p.jugado && p.fecha && new Date(p.fecha).getTime() >= ahora)
       || partidos.find(p => !p.jugado);
 
-    if (proximo) {
+    // El próximo partido solo se muestra en la pestaña Clasificación.
+    const pintarProximo = (destino) => {
+      if (!proximo) return;
       const f = fmtFecha(proximo.fecha);
       const gameProximo = findGameForLeagueMatch(proximo);
       const tag = gameProximo ? "a" : "div";
@@ -836,7 +838,7 @@
       const rivalInfo = filaRival
         ? `<div class="game-meta rival-info">Puesto <b>${filaRival.puesto}º</b> · <span class="rv-w">${filaRival.pg}V</span> <span class="rv-l">${filaRival.pp}D</span></div>`
         : "";
-      container.insertAdjacentHTML("beforeend", `
+      destino.insertAdjacentHTML("beforeend", `
         <div class="section-title">Próximo partido de liga</div>
         <${tag} class="card next-match ${gameProximo ? "linked" : ""}"${hrefAttr}>
           <div class="game-vs">${crestHtml(proximo.rival, "sm")}${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
@@ -845,10 +847,10 @@
           <div class="game-meta">${formatCampo(proximo.campo)}</div>
           ${gameProximo ? `<div class="cal-link-hint">Ver estadísticas <svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>` : ""}
         </${tag}>`);
-    }
+    };
 
-    const pills = el(`<div class="pill-toggle fill" style="margin-top:18px"></div>`);
-    [["clasif", "Clasificación"], ["calendario", "Calendario"], ["jornadas", "Jornadas"], ["jugadores", "Jugadores"]].forEach(([k, label]) => {
+    const pills = el(`<div class="pill-toggle fill"></div>`);
+    [["clasif", "Clasificación"], ["calendario", "Calendario"], ["jornadas", "Jornadas"], ["jugadores", "Equipos"]].forEach(([k, label]) => {
       const b = el(`<button type="button" class="${ligaTab === k ? "active" : ""}">${label}</button>`);
       b.addEventListener("click", () => { ligaTab = k; pintarLiga(container); });
       pills.appendChild(b);
@@ -857,7 +859,7 @@
 
     const cuerpo = el(`<div></div>`);
     container.appendChild(cuerpo);
-    if (ligaTab === "clasif") ligaClasificacion(cuerpo, c);
+    if (ligaTab === "clasif") { pintarProximo(cuerpo); ligaClasificacion(cuerpo, c); }
     else if (ligaTab === "calendario") ligaCalendario(cuerpo, partidos);
     else if (ligaTab === "jugadores") ligaJugadores(cuerpo, c, container);
     else ligaJornadas(cuerpo, c, container);
@@ -930,8 +932,7 @@
   // dorsal que se muestra es el de su último partido (cambia de un partido
   // a otro). Se actualiza a mano cuando hay jornadas nuevas.
   let ligaJugData;            // undefined = sin cargar, null = no disponible
-  let ligaJugEquipo = "TODOS";
-  let ligaJugEquipoScroll = null;
+  let ligaJugEquipo = null;   // equipo elegido en el desplegable (null = el primero)
 
   function cargarJugadoresLiga() {
     if (ligaJugData !== undefined) return Promise.resolve(ligaJugData);
@@ -981,31 +982,23 @@
       return;
     }
     const todos = jugadoresDeLiga(ligaJugData);
-    const equipos = (c.clasificacion || []).map(e => e.nombre.toUpperCase());
-    todos.forEach(j => { if (!equipos.includes(j.equipo)) equipos.push(j.equipo); });
-    if (ligaJugEquipo !== "TODOS" && !equipos.includes(ligaJugEquipo)) ligaJugEquipo = "TODOS";
+    // Solo equipos que tienen jugadores en los datos, en el orden de la clasificación
+    const hay = new Set(todos.map(j => j.equipo));
+    const equipos = (c.clasificacion || []).map(e => e.nombre.toUpperCase()).filter(e => hay.has(e));
+    hay.forEach(e => { if (!equipos.includes(e)) equipos.push(e); });
+    if (!ligaJugEquipo || !equipos.includes(ligaJugEquipo)) ligaJugEquipo = equipos[0];
 
-    const fila = el(`<div class="pill-toggle" style="margin-top:12px"></div>`);
-    [["TODOS", "Todos"], ...equipos.map(e => [e, e])].forEach(([k, label]) => {
-      const b = el(`<button type="button" class="${k === ligaJugEquipo ? "active" : ""}">${esc(label)}</button>`);
-      b.addEventListener("click", () => { ligaJugEquipo = k; pintarLiga(container); });
-      fila.appendChild(b);
-    });
-    fila.addEventListener("scroll", () => { ligaJugEquipoScroll = fila.scrollLeft; });
-    cuerpo.appendChild(fila);
-    requestAnimationFrame(() => {
-      if (ligaJugEquipoScroll === null) fila.querySelector("button.active").scrollIntoView({ inline: "center", block: "nearest" });
-      else fila.scrollLeft = ligaJugEquipoScroll;
-    });
+    const sel = el(`<select class="team-select" aria-label="Equipo">${equipos.map(e => `<option value="${esc(e)}" ${e === ligaJugEquipo ? "selected" : ""}>${esc(e)}</option>`).join("")}</select>`);
+    sel.addEventListener("change", () => { ligaJugEquipo = sel.value; pintarLiga(container); });
+    cuerpo.appendChild(sel);
 
-    const verTodos = ligaJugEquipo === "TODOS";
-    const rows = todos.filter(j => verTodos || j.equipo === ligaJugEquipo);
+    const rows = todos.filter(j => j.equipo === ligaJugEquipo);
     const wrap = el(`
       <div class="table-wrap"><table class="stats-table players">
         <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th><th>PTS</th><th>PTS TOT</th><th>T2</th><th>T3</th><th>TL</th><th>+/-</th><th>+/- TOT</th></tr></thead>
         <tbody>${rows.map(j => `
           <tr>
-            <td data-sort="${esc(titulo(j.nombre))}"><span class="pl-n">${esc(j.dorsal)}</span><span class="pl-name">${esc(nombreCorto(j.nombre))}</span>${verTodos ? `<small class="pl-team">${esc(j.equipo)}</small>` : ""}</td>
+            <td data-sort="${esc(titulo(j.nombre))}"><span class="pl-n">${esc(j.dorsal)}</span><span class="pl-name">${esc(nombreCorto(j.nombre))}</span></td>
             <td>${j.pj}</td>
             <td>${j.minAvg === null ? "—" : fmtMinSec(Math.round(j.minAvg))}</td>
             <td>${j.pj ? fmtAvg(j.pts / j.pj) : "—"}</td>

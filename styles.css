@@ -1208,3 +1208,15 @@ small.pl-team { display: block; margin-left: 28px; font-size: 10px; font-weight:
 .pill-toggle.fill button { flex: 1 1 auto; padding-left: 6px; padding-right: 6px; font-size: 12px; letter-spacing: -0.1px; }
 .pl-name { display: inline-block; max-width: 118px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 table.players td:first-child { min-width: 0; }
+
+/* Liga > Equipos: desplegable de equipo */
+.team-select {
+  display: block; width: 100%; margin: 0 0 12px;
+  padding: 11px 38px 11px 14px;
+  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a7adbb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 18px;
+  border: 1px solid var(--border-strong); border-radius: 12px;
+  color: var(--text-primary); font: 700 14px "Inter", system-ui, sans-serif;
+  -webkit-appearance: none; appearance: none;
+}
+.team-select:focus { outline: none; border-color: var(--accent); }
+.pill-toggle.fill { margin-bottom: 14px; }
