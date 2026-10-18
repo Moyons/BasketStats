@@ -1005,6 +1005,18 @@
     dd.querySelectorAll(".team-dd-item").forEach(b => b.addEventListener("click", () => { ligaJugEquipo = b.dataset.e; pintarLiga(container); }));
     cuerpo.appendChild(dd);
 
+    // Puntos anotados y recibidos por partido (de la clasificación)
+    const fe = clas.find(x => x.nombre.toUpperCase() === ligaJugEquipo);
+    if (fe && fe.pj) {
+      const pfm = fe.pf / fe.pj, pcm = fe.pc / fe.pj;
+      cuerpo.appendChild(el(`
+        <div class="stat-tiles" style="margin-bottom:12px">
+          ${statTile(fmtAvg(pfm), "PUNTOS A FAVOR")}
+          ${statTile(fmtAvg(pcm), "PUNTOS EN CONTRA")}
+          ${statTile(fmtSigned(Math.round((pfm - pcm) * 10) / 10), "DIFERENCIA")}
+        </div>`));
+    }
+
     const rows = todos.filter(j => j.equipo === ligaJugEquipo);
     const wrap = el(`
       <div class="table-wrap"><table class="stats-table players">
