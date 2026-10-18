@@ -2,9 +2,11 @@ name: Calendario y clasificación
 
 on:
   schedule:
-    # Viernes y domingo. Madrid es UTC+1 en invierno y UTC+2 en verano,
-    # así que se programan las dos horas y el paso "Comprobar hora" deja
-    # pasar solo la que cae a las 16:00 de Madrid.
+    # Viernes y domingo, dos veces cada día (14:00 y 15:00 UTC, que cubre
+    # las 16:00 de Madrid tanto en horario de verano como de invierno).
+    # No hay guarda de hora: GitHub retrasa los cron programados varias
+    # horas y una guarda así descartaba la ejecución. Correr dos veces es
+    # inocuo: la segunda no encuentra cambios y no commitea nada.
     - cron: "0 14,15 * * 5,0"
   workflow_dispatch:       # también se puede lanzar a mano desde la pestaña Actions
 
@@ -15,39 +17,22 @@ jobs:
   actualizar:
     runs-on: ubuntu-latest
     steps:
-      - name: Comprobar hora (Madrid)
-        id: hora
-        run: |
-          H=$(TZ=Europe/Madrid date +%H)
-          if [ "$GITHUB_EVENT_NAME" = "schedule" ] && [ "$H" != "16" ]; then
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "Son las ${H}:00 en Madrid: no toca ahora"
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/checkout@v4
-        if: steps.hora.outputs.run == 'true'
 
       - uses: actions/setup-node@v4
-        if: steps.hora.outputs.run == 'true'
         with:
           node-version: 20
 
       - name: Instalar dependencias
-        if: steps.hora.outputs.run == 'true'
         run: npm install
 
       - name: Instalar navegador para el scraper
-        if: steps.hora.outputs.run == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Extraer calendario y clasificación de la FBM
-        if: steps.hora.outputs.run == 'true'
         run: npm run calendario
 
       - name: Guardar calendario.json si ha cambiado
-        if: steps.hora.outputs.run == 'true'
         run: |
           git config user.name "calendario-bot"
           git config user.email "actions@users.noreply.github.com"
@@ -60,11 +45,10 @@ jobs:
           fi
 
       - name: Publicar la app en Surge
-        if: steps.hora.outputs.run == 'true'
         env:
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
         run: |
           if [ -z "$SURGE_TOKEN" ]; then echo "Sin SURGE_TOKEN: no se publica"; exit 0; fi
           mkdir -p dist
-          cp index.html styles.css app.js manifest.webmanifest icon.svg sw.js calendario.json dist/
+          cp index.html styles.css app.js manifest.webmanifest icon-512.png logo-chavalitros-trim.png sw.js calendario.json dist/
           npx --yes surge dist chavalitros-basket.surge.sh
