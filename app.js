@@ -859,7 +859,7 @@
 
     const cuerpo = el(`<div></div>`);
     container.appendChild(cuerpo);
-    if (ligaTab === "clasif") { pintarProximo(cuerpo); ligaClasificacion(cuerpo, c); }
+    if (ligaTab === "clasif") { pintarProximo(cuerpo); ligaClasificacion(cuerpo, c, container); }
     else if (ligaTab === "calendario") ligaCalendario(cuerpo, partidos);
     else if (ligaTab === "jugadores") ligaJugadores(cuerpo, c, container);
     else ligaJornadas(cuerpo, c, container);
@@ -869,7 +869,18 @@
     requestAnimationFrame(updateAllTableFades);
   }
 
-  function ligaClasificacion(cuerpo, c) {
+  // Tocar un equipo en las tablas lleva a sus estadísticas: el nuestro, a
+  // Estadísticas > Equipo; cualquier otro, a Liga > Equipos con ese equipo.
+  function irAEquipo(nombre, container) {
+    const n = String(nombre).toUpperCase();
+    if (n === (ligaData.equipo || "").toUpperCase()) { seasonTab = "equipo"; go("/season"); return; }
+    ligaTab = "jugadores";
+    ligaJugEquipo = n;
+    pintarLiga(container);
+    window.scrollTo(0, 0);
+  }
+
+  function ligaClasificacion(cuerpo, c, container) {
     if (!Array.isArray(c.clasificacion) || !c.clasificacion.length) {
       cuerpo.appendChild(el(`<p class="hint">Todavía no hay clasificación.</p>`));
       return;
@@ -887,12 +898,8 @@
             <td>${e.pf}</td><td>${e.pc}</td><td><b>${e.puntos}</b></td>
           </tr>`).join("")}
         </tbody></table></div>`);
-    wrap.querySelectorAll("tbody tr").forEach(tr => {
-      tr.addEventListener("click", () => {
-        const estaba = tr.classList.contains("picked");
-        wrap.querySelectorAll("tr.picked").forEach(x => x.classList.remove("picked"));
-        if (!estaba) tr.classList.add("picked");
-      });
+    wrap.querySelectorAll("tbody tr").forEach((tr, i) => {
+      tr.addEventListener("click", () => irAEquipo(c.clasificacion[i].nombre, container));
     });
     cuerpo.appendChild(wrap);
   }
@@ -988,9 +995,28 @@
     hay.forEach(e => { if (!equipos.includes(e)) equipos.push(e); });
     if (!ligaJugEquipo || !equipos.includes(ligaJugEquipo)) ligaJugEquipo = equipos[0];
 
-    const sel = el(`<select class="team-select" aria-label="Equipo">${equipos.map(e => `<option value="${esc(e)}" ${e === ligaJugEquipo ? "selected" : ""}>${esc(e)}</option>`).join("")}</select>`);
-    sel.addEventListener("change", () => { ligaJugEquipo = sel.value; pintarLiga(container); });
-    cuerpo.appendChild(sel);
+    // Desplegable propio (no el nativo): puesto, nombre y registro V/D de cada equipo
+    const clas = c.clasificacion || [];
+    const nEq = clas.length;
+    const posCls = (f) => nEq < 6 || !f ? "" : f.puesto === 1 ? "pos-1" : (f.puesto === 2 || f.puesto === 3) ? "pos-top" : f.puesto > nEq - 2 ? "pos-bottom" : "";
+    const itemEquipo = (e) => {
+      const f = clas.find(x => x.nombre.toUpperCase() === e);
+      return `<span class="dd-pos ${posCls(f)}">${f ? f.puesto : "–"}</span><span class="dd-name">${esc(e)}</span>${f ? `<span class="dd-rec"><b class="rv-w">${f.pg}V</b> <b class="rv-l">${f.pp}D</b></span>` : ""}`;
+    };
+    const dd = el(`
+      <div class="team-dd">
+        <button type="button" class="team-dd-btn" aria-expanded="false">${itemEquipo(ligaJugEquipo)}<svg class="dd-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="team-dd-list" hidden>${equipos.map(e => `<button type="button" class="team-dd-item ${e === ligaJugEquipo ? "on" : ""}" data-e="${esc(e)}">${itemEquipo(e)}</button>`).join("")}</div>
+      </div>`);
+    const btnDd = dd.querySelector(".team-dd-btn"), listaDd = dd.querySelector(".team-dd-list");
+    btnDd.addEventListener("click", () => {
+      const abrir = listaDd.hidden;
+      listaDd.hidden = !abrir;
+      dd.classList.toggle("open", abrir);
+      btnDd.setAttribute("aria-expanded", String(abrir));
+    });
+    dd.querySelectorAll(".team-dd-item").forEach(b => b.addEventListener("click", () => { ligaJugEquipo = b.dataset.e; pintarLiga(container); }));
+    cuerpo.appendChild(dd);
 
     const rows = todos.filter(j => j.equipo === ligaJugEquipo);
     const wrap = el(`
@@ -1047,7 +1073,7 @@
     const tarjeta = el(`<div class="card group-results"></div>`);
     tarjeta.appendChild(el(`<div class="gr-jornada">${esc(ligaJornada)}</div>`));
     delaJornada.forEach(p => {
-      const nombre = (n, gana) => `<span class="gr-team ${gana ? "win" : ""} ${n.toUpperCase() === miEquipo ? "mine" : ""}">${esc(n)}</span>`;
+      const nombre = (n, gana) => `<span class="gr-team ${gana ? "win" : ""} ${n.toUpperCase() === miEquipo ? "mine" : ""}" data-equipo="${esc(n)}">${esc(n)}</span>`;
       let centro;
       if (p.jugado) {
         centro = `<span class="gr-score tabular">${p.puntosLocal} - ${p.puntosVisitante}</span>`;
@@ -1065,6 +1091,7 @@
     const jugaron = new Set(delaJornada.flatMap(p => [p.local.toUpperCase(), p.visitante.toUpperCase()]));
     const descansan = (c.clasificacion || []).map(e => e.nombre).filter(n => !jugaron.has(n.toUpperCase()));
     if (descansan.length) tarjeta.appendChild(el(`<div class="gr-rest">Descansa: ${descansan.map(esc).join(", ")}</div>`));
+    tarjeta.querySelectorAll(".gr-team").forEach(sp => sp.addEventListener("click", () => irAEquipo(sp.dataset.equipo, container)));
     cuerpo.appendChild(tarjeta);
   }
 

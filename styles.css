@@ -1159,8 +1159,6 @@ table.stats-table tbody tr.pos-bottom td:first-child { color: var(--critical); b
 
 /* Fila de nuestro equipo / fila seleccionada: el mismo color en TODA la línea */
 table.stats-table tbody tr.selected, table.stats-table tbody tr.selected td, table.stats-table tbody tr.selected td:first-child { background: #3b2921; }
-table.stats-table tbody tr.picked, table.stats-table tbody tr.picked td, table.stats-table tbody tr.picked td:first-child { background: #22314d; }
-table.stats-table tbody tr.picked td:first-child { color: #9ec5f4; }
 /* Al pulsar una fila, toda la línea cambia de color (también la columna fija) */
 table.stats-table tbody tr:active, table.stats-table tbody tr:active td, table.stats-table tbody tr:active td:first-child { background: var(--surface-3) !important; }
 
@@ -1209,14 +1207,45 @@ small.pl-team { display: block; margin-left: 28px; font-size: 10px; font-weight:
 .pl-name { display: inline-block; max-width: 118px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 table.players td:first-child { min-width: 0; }
 
-/* Liga > Equipos: desplegable de equipo */
-.team-select {
-  display: block; width: 100%; margin: 0 0 12px;
-  padding: 11px 38px 11px 14px;
-  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a7adbb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 18px;
-  border: 1px solid var(--border-strong); border-radius: 12px;
-  color: var(--text-primary); font: 700 14px "Inter", system-ui, sans-serif;
-  -webkit-appearance: none; appearance: none;
-}
-.team-select:focus { outline: none; border-color: var(--accent); }
 .pill-toggle.fill { margin-bottom: 14px; }
+
+/* Liga > Equipos: desplegable propio de equipo */
+.team-dd { margin: 0 0 12px; }
+.team-dd-btn, .team-dd-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px 12px; text-align: left; cursor: pointer;
+  color: var(--text-primary); font: 700 14px "Inter", system-ui, sans-serif;
+}
+.team-dd-btn {
+  background: linear-gradient(175deg, var(--surface-2), var(--surface-1));
+  border: 1px solid var(--border-strong); border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+.team-dd.open .team-dd-btn { border-color: var(--accent); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.team-dd-btn .dd-chev { margin-left: auto; width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: var(--text-secondary); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s ease; }
+.team-dd.open .dd-chev { transform: rotate(180deg); stroke: var(--accent); }
+.team-dd-list {
+  max-height: 340px; overflow-y: auto;
+  background: var(--surface-1); border: 1px solid var(--accent); border-top: none;
+  border-radius: 0 0 14px 14px;
+}
+.team-dd-item { background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; font-weight: 600; }
+.team-dd-item:last-child { border-bottom: none; }
+.team-dd-item:active { background: var(--surface-3); }
+.team-dd-item.on { background: var(--accent-dim); font-weight: 800; }
+.dd-pos {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface-3); color: var(--text-secondary);
+  font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 14px;
+}
+.dd-pos.pos-1 { background: #2c2715; color: var(--gold); box-shadow: inset 0 0 0 1.5px var(--gold); }
+.dd-pos.pos-top { background: #14291d; color: #3fcf7a; box-shadow: inset 0 0 0 1.5px #3fcf7a; }
+.dd-pos.pos-bottom { background: #2b1618; color: var(--critical); box-shadow: inset 0 0 0 1.5px var(--critical); }
+.dd-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .01em; }
+.dd-rec { flex-shrink: 0; font-size: 12px; }
+.dd-rec b { font-weight: 800; }
+.team-dd-btn .dd-rec { margin-right: 6px; }
+/* tocar una fila/equipo lleva a sus estadísticas */
+table.standings tbody tr { cursor: pointer; }
+.gr-row .gr-team { cursor: pointer; }
