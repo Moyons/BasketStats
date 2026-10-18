@@ -848,7 +848,7 @@
     }
 
     const pills = el(`<div class="pill-toggle fill" style="margin-top:18px"></div>`);
-    [["clasif", "Clasificación"], ["calendario", "Nuestro calendario"], ["jornadas", "Jornadas"]].forEach(([k, label]) => {
+    [["clasif", "Clasificación"], ["calendario", "Calendario"], ["jornadas", "Jornadas"]].forEach(([k, label]) => {
       const b = el(`<button type="button" class="${ligaTab === k ? "active" : ""}">${label}</button>`);
       b.addEventListener("click", () => { ligaTab = k; pintarLiga(container); });
       pills.appendChild(b);
@@ -861,7 +861,7 @@
     else if (ligaTab === "calendario") ligaCalendario(cuerpo, partidos);
     else ligaJornadas(cuerpo, c, container);
 
-    container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}. Se revisa cada semana automáticamente.</p>`));
+    container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}.</p>`));
     requestAnimationFrame(updateAllTableFades);
   }
 
