@@ -800,123 +800,180 @@
     }) || null;
   }
 
-  // Liga: próximo partido, clasificación y calendario de liga (calendario.json,
-  // actualizado cada semana desde la web de la FBM).
+  // Liga (calendario.json, actualizado desde la web de la FBM): el próximo
+  // partido va siempre arriba y debajo hay tres submenús: Clasificación
+  // (por defecto), Nuestro calendario y Jornadas (con selector de jornada).
+  let ligaData = null;
+  let ligaTab = "clasif";
+  let ligaJornada = null;
+  let ligaJornadaScroll = null;
+
   function renderLiga(container) {
     container.innerHTML = `<p class="hint" style="margin-top:4px">Cargando liga…</p>`;
     fetch("calendario.json", { cache: "no-store" })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(c => {
-        container.innerHTML = "";
-        const ahora = Date.now();
-        const partidos = c.partidos || [];
-        const proximo = partidos.find(p => !p.jugado && p.fecha && new Date(p.fecha).getTime() >= ahora)
-          || partidos.find(p => !p.jugado);
-
-        if (proximo) {
-          const f = fmtFecha(proximo.fecha);
-          const gameProximo = findGameForLeagueMatch(proximo);
-          const tag = gameProximo ? "a" : "div";
-          const hrefAttr = gameProximo ? ` href="#/game/${gameProximo.id}"` : "";
-          const filaRival = (c.clasificacion || []).find(e => e.nombre.toUpperCase() === (proximo.rival || "").toUpperCase());
-          const rivalInfo = filaRival
-            ? `<div class="game-meta rival-info">Puesto <b>${filaRival.puesto}º</b> · <span class="rv-w">${filaRival.pg}V</span> <span class="rv-l">${filaRival.pp}D</span></div>`
-            : "";
-          container.insertAdjacentHTML("beforeend", `
-            <div class="section-title">Próximo partido de liga</div>
-            <${tag} class="card next-match ${gameProximo ? "linked" : ""}"${hrefAttr}>
-              <div class="game-vs">${crestHtml(proximo.rival, "sm")}${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
-              ${rivalInfo}
-              <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
-              <div class="game-meta">${formatCampo(proximo.campo)}</div>
-              ${gameProximo ? `<div class="cal-link-hint">Ver estadísticas <svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>` : ""}
-            </${tag}>`);
-        }
-
-        if (Array.isArray(c.clasificacion) && c.clasificacion.length) {
-          const nEq = c.clasificacion.length;
-          // 1º en un color, 2º y 3º en otro, y los dos últimos en otro.
-          const posClass = (e) => nEq < 6 ? "" : e.puesto === 1 ? "pos-1" : (e.puesto === 2 || e.puesto === 3) ? "pos-top" : e.puesto > nEq - 2 ? "pos-bottom" : "";
-          container.insertAdjacentHTML("beforeend", `<div class="section-title">Clasificación</div>
-            <div class="table-wrap"><table class="stats-table standings">
-              <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PP</th><th>PF</th><th>PC</th><th>Pts</th></tr></thead>
-              <tbody>${c.clasificacion.map(e => `
-                <tr class="${[e.nombre.toUpperCase() === (c.equipo || "").toUpperCase() ? "selected" : "", posClass(e)].join(" ").trim()}">
-                  <td>${e.puesto ?? ""}</td><td><span class="standings-team">${crestHtml(e.nombre, "sm")}${esc(e.nombre)}</span></td><td>${e.pj}</td><td>${e.pg}</td><td>${e.pp}</td>
-                  <td>${e.pf}</td><td>${e.pc}</td><td><b>${e.puntos}</b></td>
-                </tr>`).join("")}
-              </tbody></table></div>`);
-          const tablaClasif = container.querySelector("table.standings");
-          tablaClasif.querySelectorAll("tbody tr").forEach(tr => {
-            tr.addEventListener("click", () => {
-              const estaba = tr.classList.contains("picked");
-              tablaClasif.querySelectorAll("tr.picked").forEach(x => x.classList.remove("picked"));
-              if (!estaba) tr.classList.add("picked");
-            });
-          });
-        }
-
-        // Resultados de los partidos ya jugados de todos los equipos del grupo.
-        const jugadosGrupo = (c.partidosGrupo || []).filter(p => p.jugado);
-        if (jugadosGrupo.length) {
-          container.insertAdjacentHTML("beforeend", `<div class="section-title">Resultados del grupo</div>`);
-          const porJornada = new Map();
-          jugadosGrupo.forEach(p => {
-            if (!porJornada.has(p.jornada)) porJornada.set(p.jornada, []);
-            porJornada.get(p.jornada).push(p);
-          });
-          const miEquipo = (c.equipo || "").toUpperCase();
-          const tarjeta = el(`<div class="card group-results"></div>`);
-          [...porJornada.entries()].reverse().forEach(([jornada, ps]) => {
-            tarjeta.appendChild(el(`<div class="gr-jornada">${esc(jornada)}</div>`));
-            ps.forEach(p => {
-              const ganaLocal = p.puntosLocal > p.puntosVisitante;
-              const nombre = (n, gana) => `<span class="gr-team ${gana ? "win" : ""} ${n.toUpperCase() === miEquipo ? "mine" : ""}">${esc(n)}</span>`;
-              tarjeta.appendChild(el(`
-                <div class="gr-row">
-                  ${nombre(p.local, ganaLocal)}
-                  <span class="gr-score tabular">${p.puntosLocal} - ${p.puntosVisitante}</span>
-                  ${nombre(p.visitante, !ganaLocal)}
-                </div>`));
-            });
-          });
-          container.appendChild(tarjeta);
-        }
-
-        container.insertAdjacentHTML("beforeend", `<div class="section-title">Calendario de liga</div>`);
-        const lista = el(`<div class="card"></div>`);
-        partidos.forEach(p => {
-          const f = p.fecha ? fmtFecha(p.fecha) : { dia: p.fechaTexto, hora: "" };
-          let resultado = "";
-          if (p.jugado) {
-            const nuestro = p.esLocal ? p.puntosLocal : p.puntosVisitante;
-            const suyo = p.esLocal ? p.puntosVisitante : p.puntosLocal;
-            const gana = nuestro > suyo;
-            resultado = `<span class="res ${gana ? "win" : "lose"}">${gana ? "V" : "D"} ${nuestro}-${suyo}</span>`;
-          }
-          const gamePartido = findGameForLeagueMatch(p);
-          const tag = gamePartido ? "a" : "div";
-          const hrefAttr = gamePartido ? ` href="#/game/${gamePartido.id}"` : "";
-          lista.appendChild(el(`
-            <${tag} class="cal-row ${p.jugado ? "played" : ""} ${gamePartido ? "linked" : ""}"${hrefAttr}>
-              <div class="cal-date"><b>${esc(f.dia)}</b><small>${esc(f.hora)}</small></div>
-              ${crestHtml(p.rival, "sm")}
-              <div class="cal-main">
-                <div class="cal-rival">${p.esLocal ? "vs" : "@"} <b>${esc(p.rival)}</b></div>
-                <div class="cal-campo">${formatCampo(p.campo)}</div>
-              </div>
-              <div class="cal-res">${resultado}</div>
-              ${gamePartido ? `<svg class="cal-go" viewBox="0 0 24 24">${ICONS.chevron}</svg>` : ""}
-            </${tag}>`));
-        });
-        container.appendChild(lista);
-        container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}. Se revisa cada semana automáticamente.</p>`));
-        requestAnimationFrame(updateAllTableFades);
-      })
+      .then(c => { ligaData = c; pintarLiga(container); })
       .catch(() => {
         container.innerHTML = "";
         container.appendChild(el(emptyState(ICONS.calendar, "No se pudo cargar la liga", "Revisa la conexión e inténtalo de nuevo.")));
       });
+  }
+
+  function pintarLiga(container) {
+    const c = ligaData;
+    container.innerHTML = "";
+    const partidos = c.partidos || [];
+    const ahora = Date.now();
+    const proximo = partidos.find(p => !p.jugado && p.fecha && new Date(p.fecha).getTime() >= ahora)
+      || partidos.find(p => !p.jugado);
+
+    if (proximo) {
+      const f = fmtFecha(proximo.fecha);
+      const gameProximo = findGameForLeagueMatch(proximo);
+      const tag = gameProximo ? "a" : "div";
+      const hrefAttr = gameProximo ? ` href="#/game/${gameProximo.id}"` : "";
+      const filaRival = (c.clasificacion || []).find(e => e.nombre.toUpperCase() === (proximo.rival || "").toUpperCase());
+      const rivalInfo = filaRival
+        ? `<div class="game-meta rival-info">Puesto <b>${filaRival.puesto}º</b> · <span class="rv-w">${filaRival.pg}V</span> <span class="rv-l">${filaRival.pp}D</span></div>`
+        : "";
+      container.insertAdjacentHTML("beforeend", `
+        <div class="section-title">Próximo partido de liga</div>
+        <${tag} class="card next-match ${gameProximo ? "linked" : ""}"${hrefAttr}>
+          <div class="game-vs">${crestHtml(proximo.rival, "sm")}${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
+          ${rivalInfo}
+          <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
+          <div class="game-meta">${formatCampo(proximo.campo)}</div>
+          ${gameProximo ? `<div class="cal-link-hint">Ver estadísticas <svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>` : ""}
+        </${tag}>`);
+    }
+
+    const pills = el(`<div class="pill-toggle fill" style="margin-top:18px"></div>`);
+    [["clasif", "Clasificación"], ["calendario", "Nuestro calendario"], ["jornadas", "Jornadas"]].forEach(([k, label]) => {
+      const b = el(`<button type="button" class="${ligaTab === k ? "active" : ""}">${label}</button>`);
+      b.addEventListener("click", () => { ligaTab = k; pintarLiga(container); });
+      pills.appendChild(b);
+    });
+    container.appendChild(pills);
+
+    const cuerpo = el(`<div></div>`);
+    container.appendChild(cuerpo);
+    if (ligaTab === "clasif") ligaClasificacion(cuerpo, c);
+    else if (ligaTab === "calendario") ligaCalendario(cuerpo, partidos);
+    else ligaJornadas(cuerpo, c, container);
+
+    container.appendChild(el(`<p class="hint" style="margin-top:10px">Actualizado: ${new Date(c.actualizado).toLocaleDateString("es-ES")}. Se revisa cada semana automáticamente.</p>`));
+    requestAnimationFrame(updateAllTableFades);
+  }
+
+  function ligaClasificacion(cuerpo, c) {
+    if (!Array.isArray(c.clasificacion) || !c.clasificacion.length) {
+      cuerpo.appendChild(el(`<p class="hint">Todavía no hay clasificación.</p>`));
+      return;
+    }
+    const nEq = c.clasificacion.length;
+    // 1º en un color, 2º y 3º en otro, y los dos últimos en otro.
+    const posClass = (e) => nEq < 6 ? "" : e.puesto === 1 ? "pos-1" : (e.puesto === 2 || e.puesto === 3) ? "pos-top" : e.puesto > nEq - 2 ? "pos-bottom" : "";
+    const mio = (c.equipo || "").toUpperCase();
+    const wrap = el(`
+      <div class="table-wrap no-fade"><table class="stats-table standings">
+        <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PP</th><th>PF</th><th>PC</th><th>Pts</th></tr></thead>
+        <tbody>${c.clasificacion.map(e => `
+          <tr class="${[e.nombre.toUpperCase() === mio ? "mine" : "", posClass(e)].join(" ").trim()}">
+            <td>${e.puesto ?? ""}</td><td>${esc(e.nombre)}</td><td>${e.pj}</td><td>${e.pg}</td><td>${e.pp}</td>
+            <td>${e.pf}</td><td>${e.pc}</td><td><b>${e.puntos}</b></td>
+          </tr>`).join("")}
+        </tbody></table></div>`);
+    wrap.querySelectorAll("tbody tr").forEach(tr => {
+      tr.addEventListener("click", () => {
+        const estaba = tr.classList.contains("picked");
+        wrap.querySelectorAll("tr.picked").forEach(x => x.classList.remove("picked"));
+        if (!estaba) tr.classList.add("picked");
+      });
+    });
+    cuerpo.appendChild(wrap);
+  }
+
+  function ligaCalendario(cuerpo, partidos) {
+    const lista = el(`<div class="card"></div>`);
+    partidos.forEach(p => {
+      const f = p.fecha ? fmtFecha(p.fecha) : { dia: p.fechaTexto, hora: "" };
+      let resultado = "";
+      if (p.jugado) {
+        const nuestro = p.esLocal ? p.puntosLocal : p.puntosVisitante;
+        const suyo = p.esLocal ? p.puntosVisitante : p.puntosLocal;
+        const gana = nuestro > suyo;
+        resultado = `<span class="res ${gana ? "win" : "lose"}">${gana ? "V" : "D"} ${nuestro}-${suyo}</span>`;
+      }
+      const gamePartido = findGameForLeagueMatch(p);
+      const tag = gamePartido ? "a" : "div";
+      const hrefAttr = gamePartido ? ` href="#/game/${gamePartido.id}"` : "";
+      lista.appendChild(el(`
+        <${tag} class="cal-row ${p.jugado ? "played" : ""} ${gamePartido ? "linked" : ""}"${hrefAttr}>
+          <div class="cal-date"><b>${esc(f.dia)}</b><small>${esc(f.hora)}</small></div>
+          ${crestHtml(p.rival, "sm")}
+          <div class="cal-main">
+            <div class="cal-rival">${p.esLocal ? "vs" : "@"} <b>${esc(p.rival)}</b></div>
+            <div class="cal-campo">${formatCampo(p.campo)}</div>
+          </div>
+          <div class="cal-res">${resultado}</div>
+          ${gamePartido ? `<svg class="cal-go" viewBox="0 0 24 24">${ICONS.chevron}</svg>` : ""}
+        </${tag}>`));
+    });
+    cuerpo.appendChild(lista);
+  }
+
+  // Jornadas: selector de jornada y todos los partidos de esa jornada
+  // (resultados si ya se jugaron, fecha y hora si no).
+  function ligaJornadas(cuerpo, c, container) {
+    const todos = c.partidosGrupo || [];
+    const jornadas = [];
+    todos.forEach(p => { if (!jornadas.includes(p.jornada)) jornadas.push(p.jornada); });
+    if (!jornadas.length) {
+      cuerpo.appendChild(el(`<p class="hint">Todavía no hay jornadas.</p>`));
+      return;
+    }
+    if (!ligaJornada || !jornadas.includes(ligaJornada)) {
+      const pendiente = todos.find(p => !p.jugado);
+      ligaJornada = pendiente ? pendiente.jornada : jornadas[jornadas.length - 1];
+    }
+    const etiqueta = (j) => { const m = /(\d+)/.exec(j); return m ? "J" + m[1] : j; };
+    const fila = el(`<div class="pill-toggle" style="margin-top:12px"></div>`);
+    jornadas.forEach(j => {
+      const b = el(`<button type="button" class="${j === ligaJornada ? "active" : ""}">${esc(etiqueta(j))}</button>`);
+      b.addEventListener("click", () => { ligaJornada = j; pintarLiga(container); });
+      fila.appendChild(b);
+    });
+    fila.addEventListener("scroll", () => { ligaJornadaScroll = fila.scrollLeft; });
+    cuerpo.appendChild(fila);
+    requestAnimationFrame(() => {
+      if (ligaJornadaScroll === null) fila.querySelector("button.active").scrollIntoView({ inline: "center", block: "nearest" });
+      else fila.scrollLeft = ligaJornadaScroll;
+    });
+
+    const miEquipo = (c.equipo || "").toUpperCase();
+    const delaJornada = todos.filter(p => p.jornada === ligaJornada);
+    const tarjeta = el(`<div class="card group-results"></div>`);
+    tarjeta.appendChild(el(`<div class="gr-jornada">${esc(ligaJornada)}</div>`));
+    delaJornada.forEach(p => {
+      const nombre = (n, gana) => `<span class="gr-team ${gana ? "win" : ""} ${n.toUpperCase() === miEquipo ? "mine" : ""}">${esc(n)}</span>`;
+      let centro;
+      if (p.jugado) {
+        centro = `<span class="gr-score tabular">${p.puntosLocal} - ${p.puntosVisitante}</span>`;
+      } else {
+        const f = p.fecha ? fmtFecha(p.fecha) : null;
+        centro = `<span class="gr-score gr-pending">${f ? `${esc(f.dia)}<br>${esc(f.hora)}` : "—"}</span>`;
+      }
+      tarjeta.appendChild(el(`
+        <div class="gr-row">
+          ${nombre(p.local, p.jugado && p.puntosLocal > p.puntosVisitante)}
+          ${centro}
+          ${nombre(p.visitante, p.jugado && p.puntosVisitante > p.puntosLocal)}
+        </div>`));
+    });
+    const jugaron = new Set(delaJornada.flatMap(p => [p.local.toUpperCase(), p.visitante.toUpperCase()]));
+    const descansan = (c.clasificacion || []).map(e => e.nombre).filter(n => !jugaron.has(n.toUpperCase()));
+    if (descansan.length) tarjeta.appendChild(el(`<div class="gr-rest">Descansa: ${descansan.map(esc).join(", ")}</div>`));
+    cuerpo.appendChild(tarjeta);
   }
 
   /* ---------------------------------------------------------

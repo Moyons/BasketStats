@@ -1180,3 +1180,19 @@ table.stats-table tbody tr:active, table.stats-table tbody tr:active td, table.s
 .gr-row .gr-team.win { color: var(--text-primary); font-weight: 700; }
 .gr-row .gr-team.mine { color: var(--accent-2); }
 .gr-row .gr-score { font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 17px; color: var(--text-primary); }
+
+/* Liga: submenús, clasificación compacta (sin difuminado ni escudos) y jornadas */
+.pill-toggle.fill button { flex: 1 1 auto; white-space: nowrap; padding-left: 12px; padding-right: 12px; }
+.table-wrap.no-fade::after { display: none; }
+table.standings th, table.standings td { padding: 10px 7px; }
+table.standings { font-size: 12px; }
+/* Nuestro equipo: el color de la fila lo da la posición; aquí solo se marca el
+   nombre. Si no está en ninguna franja de color, la fila entera se resalta. */
+table.stats-table tbody tr.mine td:nth-child(2) { color: var(--accent-2); font-weight: 800; }
+table.stats-table tbody tr.mine:not(.pos-1):not(.pos-top):not(.pos-bottom),
+table.stats-table tbody tr.mine:not(.pos-1):not(.pos-top):not(.pos-bottom) td:first-child { background: #3b2921; }
+.gr-row .gr-pending { font-family: "Inter", sans-serif; font-weight: 600; font-size: 11px; line-height: 1.25; text-align: center; color: var(--text-muted); text-transform: capitalize; }
+.gr-rest { margin-top: 12px; font-size: 12px; color: var(--text-muted); }
+table.standings th, table.standings td { padding: 10px 6px; }
+.gr-row { gap: 8px; }
+.gr-row .gr-team { font-size: 12px; }

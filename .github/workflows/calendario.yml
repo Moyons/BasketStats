@@ -10,7 +10,8 @@ on:
     # no se commitea nada.
     # Viernes: ~16:00 Madrid.
     - cron: "0 14,15 * * 5"
-    # Domingos, hora Madrid: 11:35, 13:05, 14:05 y 15:20 (se quitó la de las 10:20).
+    # Domingos, hora Madrid: 10:20, 11:35, 13:05, 14:05 y 15:20.
+    - cron: "20 8,9 * * 0"         # 10:20
     - cron: "35 9,10 * * 0"        # 11:35
     - cron: "5 11,12,13 * * 0"     # 13:05 y 14:05
     - cron: "20 13,14 * * 0"       # 15:20
