@@ -608,22 +608,6 @@
   }
 
 
-  // "Escudo" de un rival: iniciales sobre un degradado de color fijo para
-  // ese nombre (mismo equipo siempre sale con el mismo color).
-  function hashHue(str) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-    return h % 360;
-  }
-  function crestHtml(name, size) {
-    const n = (name || "?").trim();
-    const letter = n ? n[0].toUpperCase() : "?";
-    const hue = hashHue(n.toUpperCase());
-    const cls = "crest" + (size ? " crest-" + size : "");
-    const bg = `linear-gradient(135deg, hsl(${hue} 68% 52%), hsl(${(hue + 36) % 360} 68% 36%))`;
-    return `<span class="${cls}" style="background:${bg}">${esc(letter)}</span>`;
-  }
-
   let toastTimer = null;
   function toast(msg) {
     const t = document.getElementById("toast");
@@ -831,22 +815,21 @@
     const pintarProximo = (destino) => {
       if (!proximo) return;
       const f = fmtFecha(proximo.fecha);
-      const gameProximo = findGameForLeagueMatch(proximo);
-      const tag = gameProximo ? "a" : "div";
-      const hrefAttr = gameProximo ? ` href="#/game/${gameProximo.id}"` : "";
       const filaRival = (c.clasificacion || []).find(e => e.nombre.toUpperCase() === (proximo.rival || "").toUpperCase());
       const rivalInfo = filaRival
         ? `<div class="game-meta rival-info">Puesto <b>${filaRival.puesto}º</b> · <span class="rv-w">${filaRival.pg}V</span> <span class="rv-l">${filaRival.pp}D</span></div>`
         : "";
-      destino.insertAdjacentHTML("beforeend", `
-        <div class="section-title">Próximo partido de liga</div>
-        <${tag} class="card next-match ${gameProximo ? "linked" : ""}"${hrefAttr}>
-          <div class="game-vs">${crestHtml(proximo.rival, "sm")}${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
+      destino.insertAdjacentHTML("beforeend", `<div class="section-title">Próximo partido de liga</div>`);
+      const tarjeta = el(`
+        <div class="card next-match">
+          <div class="game-vs">${proximo.esLocal ? "vs" : "@"} <b>${esc(proximo.rival)}</b></div>
           ${rivalInfo}
           <div class="game-meta" style="font-size:15px;color:var(--text-primary);margin-top:6px">${f.dia} · ${f.hora}</div>
           <div class="game-meta">${formatCampo(proximo.campo)}</div>
-          ${gameProximo ? `<div class="cal-link-hint">Ver estadísticas <svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>` : ""}
-        </${tag}>`);
+          <div class="cal-link-hint">Ver equipo <svg viewBox="0 0 24 24">${ICONS.chevron}</svg></div>
+        </div>`);
+      tarjeta.addEventListener("click", () => irAEquipo(proximo.rival, container));
+      destino.appendChild(tarjeta);
     };
 
     const pills = el(`<div class="pill-toggle fill"></div>`);
@@ -860,7 +843,7 @@
     const cuerpo = el(`<div></div>`);
     container.appendChild(cuerpo);
     if (ligaTab === "clasif") { pintarProximo(cuerpo); ligaClasificacion(cuerpo, c, container); }
-    else if (ligaTab === "calendario") ligaCalendario(cuerpo, partidos);
+    else if (ligaTab === "calendario") ligaCalendario(cuerpo, partidos, container);
     else if (ligaTab === "jugadores") ligaJugadores(cuerpo, c, container);
     else ligaJornadas(cuerpo, c, container);
 
@@ -904,7 +887,7 @@
     cuerpo.appendChild(wrap);
   }
 
-  function ligaCalendario(cuerpo, partidos) {
+  function ligaCalendario(cuerpo, partidos, container) {
     const lista = el(`<div class="card"></div>`);
     partidos.forEach(p => {
       const f = p.fecha ? fmtFecha(p.fecha) : { dia: p.fechaTexto, hora: "" };
@@ -916,19 +899,20 @@
         resultado = `<span class="res ${gana ? "win" : "lose"}">${gana ? "V" : "D"} ${nuestro}-${suyo}</span>`;
       }
       const gamePartido = findGameForLeagueMatch(p);
-      const tag = gamePartido ? "a" : "div";
-      const hrefAttr = gamePartido ? ` href="#/game/${gamePartido.id}"` : "";
-      lista.appendChild(el(`
-        <${tag} class="cal-row ${p.jugado ? "played" : ""} ${gamePartido ? "linked" : ""}"${hrefAttr}>
+      const fila = el(`
+        <div class="cal-row ${p.jugado ? "played" : ""}">
           <div class="cal-date"><b>${esc(f.dia)}</b><small>${esc(f.hora)}</small></div>
-          ${crestHtml(p.rival, "sm")}
           <div class="cal-main">
             <div class="cal-rival">${p.esLocal ? "vs" : "@"} <b>${esc(p.rival)}</b></div>
             <div class="cal-campo">${formatCampo(p.campo)}</div>
           </div>
           <div class="cal-res">${resultado}</div>
-          ${gamePartido ? `<svg class="cal-go" viewBox="0 0 24 24">${ICONS.chevron}</svg>` : ""}
-        </${tag}>`));
+          ${gamePartido ? `<a class="cal-go-link" href="#/game/${gamePartido.id}" aria-label="Ver estadísticas del partido"><svg class="cal-go" viewBox="0 0 24 24">${ICONS.chevron}</svg></a>` : ""}
+        </div>`);
+      fila.addEventListener("click", () => irAEquipo(p.rival, container));
+      const enlace = fila.querySelector(".cal-go-link");
+      if (enlace) enlace.addEventListener("click", (e) => e.stopPropagation());
+      lista.appendChild(fila);
     });
     cuerpo.appendChild(lista);
   }
@@ -1174,7 +1158,7 @@
     const card = el(`
       <a class="game-card ${isLive ? "is-live" : isWin ? "is-win" : isLose ? "is-lose" : ""}" href="#/game/${g.id}">
         <div class="game-card-top">
-          <div class="game-vs">${crestHtml(g.opponent, "sm")}vs <b>${esc(g.opponent || "Rival")}</b></div>
+          <div class="game-vs">vs <b>${esc(g.opponent || "Rival")}</b></div>
           <span class="badge ${isLive ? "badge-live" : "badge-final"}">${isLive ? "En vivo" : "Final"}</span>
         </div>
         <div class="game-score">

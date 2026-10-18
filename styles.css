@@ -1107,25 +1107,10 @@ table.stats-table td:first-child, table.stats-table th:first-child { background-
    var(--surface-1), para que no se note distinto del resto de la fila. */
 table.stats-table tbody tr.selected td:first-child { background: #3b2921; color: var(--accent-2); font-weight: 800; }
 
-/* Escudos (iniciales con degradado, color fijo por nombre de rival) */
-.crest {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; flex-shrink: 0;
-  border-radius: 50%;
-  font-family: "Barlow Condensed", sans-serif;
-  font-weight: 800; font-size: 13px;
-  color: rgba(255,255,255,0.95);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08) inset;
-}
-.crest-sm { width: 21px; height: 21px; font-size: 10.5px; margin-right: 1px; }
-.crest-lg { width: 42px; height: 42px; font-size: 17px; }
-
-.standings-team { display: inline-flex; align-items: center; gap: 7px; }
-.cal-row.played .crest { opacity: .55; }
-
-/* Partidos de liga enlazados a un partido propio: se pueden tocar */
-.cal-row.linked, .next-match.linked { cursor: pointer; }
-.cal-row.linked:active, .next-match.linked:active { background: var(--surface-2); }
+/* Partidos de liga: se tocan para ir a las estadísticas del equipo rival */
+.cal-row, .next-match { cursor: pointer; }
+.cal-row:active, .next-match:active { background: var(--surface-2); }
+.cal-go-link { display: flex; align-items: center; justify-content: center; margin: -8px -6px -8px 0; padding: 8px 6px; flex-shrink: 0; }
 .cal-go { width: 18px; height: 18px; stroke: var(--text-muted); fill: none; stroke-width: 2.2; flex-shrink: 0; }
 .cal-link-hint {
   display: flex; align-items: center; gap: 4px;
@@ -1249,3 +1234,4 @@ table.players td:first-child { min-width: 0; }
 /* tocar una fila/equipo lleva a sus estadísticas */
 table.standings tbody tr { cursor: pointer; }
 .gr-row .gr-team { cursor: pointer; }
+.next-match { margin-bottom: 16px; }
