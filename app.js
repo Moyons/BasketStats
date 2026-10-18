@@ -899,6 +899,7 @@
         resultado = `<span class="res ${gana ? "win" : "lose"}">${gana ? "V" : "D"} ${nuestro}-${suyo}</span>`;
       }
       const gamePartido = findGameForLeagueMatch(p);
+      const irAlPartido = !!(p.jugado && gamePartido);
       const fila = el(`
         <div class="cal-row ${p.jugado ? "played" : ""}">
           <div class="cal-date"><b>${esc(f.dia)}</b><small>${esc(f.hora)}</small></div>
@@ -907,11 +908,13 @@
             <div class="cal-campo">${formatCampo(p.campo)}</div>
           </div>
           <div class="cal-res">${resultado}</div>
-          ${gamePartido ? `<a class="cal-go-link" href="#/game/${gamePartido.id}" aria-label="Ver estadísticas del partido"><svg class="cal-go" viewBox="0 0 24 24">${ICONS.chevron}</svg></a>` : ""}
+          ${irAlPartido ? `<svg class="cal-go" viewBox="0 0 24 24">${ICONS.chevron}</svg>` : ""}
         </div>`);
-      fila.addEventListener("click", () => irAEquipo(p.rival, container));
-      const enlace = fila.querySelector(".cal-go-link");
-      if (enlace) enlace.addEventListener("click", (e) => e.stopPropagation());
+      // Partido ya jugado y creado en la app -> sus estadísticas; si no, el equipo rival.
+      fila.addEventListener("click", () => {
+        if (irAlPartido) go("/game/" + gamePartido.id);
+        else irAEquipo(p.rival, container);
+      });
       lista.appendChild(fila);
     });
     cuerpo.appendChild(lista);

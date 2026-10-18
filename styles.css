@@ -1107,10 +1107,9 @@ table.stats-table td:first-child, table.stats-table th:first-child { background-
    var(--surface-1), para que no se note distinto del resto de la fila. */
 table.stats-table tbody tr.selected td:first-child { background: #3b2921; color: var(--accent-2); font-weight: 800; }
 
-/* Partidos de liga: se tocan para ir a las estadísticas del equipo rival */
+/* Partidos de liga: los jugados abren sus estadísticas y el resto las del equipo rival */
 .cal-row, .next-match { cursor: pointer; }
 .cal-row:active, .next-match:active { background: var(--surface-2); }
-.cal-go-link { display: flex; align-items: center; justify-content: center; margin: -8px -6px -8px 0; padding: 8px 6px; flex-shrink: 0; }
 .cal-go { width: 18px; height: 18px; stroke: var(--text-muted); fill: none; stroke-width: 2.2; flex-shrink: 0; }
 .cal-link-hint {
   display: flex; align-items: center; gap: 4px;
