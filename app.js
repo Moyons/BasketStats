@@ -1910,7 +1910,7 @@
     view.appendChild(el(`
       <div class="pagehead">
         <div>
-          <h1>Temporada</h1>
+          <h1>Estadísticas</h1>
           <div class="sub">${DB.games.length} partido${DB.games.length === 1 ? "" : "s"} · ${DB.games.filter(g=>g.status==='final').length} finalizados</div>
         </div>
       </div>
@@ -1940,7 +1940,7 @@
 
     // Submenús: Ranking (por defecto), Tabla completa y Equipo.
     const tabPills = el(`<div class="pill-toggle fill"></div>`);
-    [["ranking", "Ranking"], ["tabla", "Tabla completa"], ["equipo", "Equipo"]].forEach(([k, label]) => {
+    [["ranking", "Ranking"], ["tabla", "Jugadores"], ["equipo", "Equipo"]].forEach(([k, label]) => {
       const b = el(`<button type="button" class="${seasonTab === k ? "active" : ""}">${label}</button>`);
       b.addEventListener("click", () => { seasonTab = k; render(); });
       tabPills.appendChild(b);
@@ -2025,7 +2025,6 @@
           <span>TL <b>${pctStr(ts.ftm, ts.fta)}</b> <small>${ts.ftm}/${ts.fta}</small></span>
         </div>
       </div>`));
-    view.appendChild(el(`<p class="hint" style="margin-top:10px">Suma de todos los jugadores en los ${n} partido${n === 1 ? "" : "s"} con estadísticas. Los puntos a favor y en contra y el +/- usan el marcador final de los partidos donde se anotó el rival.</p>`));
   }
 
   function leaderboardChart(rows, metricKey) {
