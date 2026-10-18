@@ -1,20 +1,40 @@
 {
-  "actualizado": "2026-10-05T23:32:10.529Z",
+  "actualizado": "2026-10-18T10:15:30.986Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
   "clasificacion": [
     {
       "puesto": 1,
       "nombre": "MDA",
-      "pj": 1,
-      "pg": 1,
+      "pj": 2,
+      "pg": 2,
       "pp": 0,
-      "pf": 62,
-      "pc": 14,
-      "puntos": 2
+      "pf": 136,
+      "pc": 31,
+      "puntos": 4
     },
     {
       "puesto": 2,
+      "nombre": "TROPICALEROS",
+      "pj": 2,
+      "pg": 2,
+      "pp": 0,
+      "pf": 114,
+      "pc": 67,
+      "puntos": 4
+    },
+    {
+      "puesto": 3,
+      "nombre": "LITROS DE MAHOU",
+      "pj": 2,
+      "pg": 1,
+      "pp": 1,
+      "pf": 66,
+      "pc": 118,
+      "puntos": 3
+    },
+    {
+      "puesto": 4,
       "nombre": "CHAVALITROS",
       "pj": 1,
       "pg": 1,
@@ -24,33 +44,13 @@
       "puntos": 2
     },
     {
-      "puesto": 3,
-      "nombre": "TROPICALEROS",
-      "pj": 1,
-      "pg": 1,
-      "pp": 0,
-      "pf": 59,
-      "pc": 23,
-      "puntos": 2
-    },
-    {
-      "puesto": 4,
+      "puesto": 5,
       "nombre": "NABUCO TD",
       "pj": 1,
       "pg": 1,
       "pp": 0,
       "pf": 49,
       "pc": 38,
-      "puntos": 2
-    },
-    {
-      "puesto": 5,
-      "nombre": "LITROS DE MAHOU",
-      "pj": 1,
-      "pg": 1,
-      "pp": 0,
-      "pf": 49,
-      "pc": 44,
       "puntos": 2
     },
     {
@@ -65,6 +65,16 @@
     },
     {
       "puesto": 7,
+      "nombre": "RIF",
+      "pj": 1,
+      "pg": 0,
+      "pp": 1,
+      "pf": 44,
+      "pc": 55,
+      "puntos": 1
+    },
+    {
+      "puesto": 8,
       "nombre": "CHUPITIMANGUIS",
       "pj": 1,
       "pg": 0,
@@ -74,7 +84,7 @@
       "puntos": 1
     },
     {
-      "puesto": 8,
+      "puesto": 9,
       "nombre": "WILD BOYS",
       "pj": 1,
       "pg": 0,
@@ -84,7 +94,7 @@
       "puntos": 1
     },
     {
-      "puesto": 9,
+      "puesto": 10,
       "nombre": "VALLEKAS BASKET",
       "pj": 1,
       "pg": 0,
@@ -94,7 +104,7 @@
       "puntos": 1
     },
     {
-      "puesto": 10,
+      "puesto": 11,
       "nombre": "ENFERMOS DEL ARO",
       "pj": 1,
       "pg": 0,
@@ -102,16 +112,6 @@
       "pf": 14,
       "pc": 62,
       "puntos": 1
-    },
-    {
-      "puesto": 11,
-      "nombre": "RIF",
-      "pj": 0,
-      "pg": 0,
-      "pp": 0,
-      "pf": 0,
-      "pc": 0,
-      "puntos": 0
     }
   ],
   "partidos": [
