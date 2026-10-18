@@ -1898,6 +1898,7 @@
   ];
   let seasonMetric = "pts";
   let seasonFinishedOnly = false;
+  let seasonTab = "ranking";
   let pillRowScrollLeft = 0;
   // Cada render() reconstruye el DOM entero, así que sin esto el scroll
   // horizontal de la tabla completa se perdía (volvía a la izquierda) cada
@@ -1937,8 +1938,18 @@
       return;
     }
 
-    // Leaderboard chart
-    view.appendChild(el(`<div class="section-title">Ranking</div>`));
+    // Submenús: Ranking (por defecto), Tabla completa y Equipo.
+    const tabPills = el(`<div class="pill-toggle fill"></div>`);
+    [["ranking", "Ranking"], ["tabla", "Tabla completa"], ["equipo", "Equipo"]].forEach(([k, label]) => {
+      const b = el(`<button type="button" class="${seasonTab === k ? "active" : ""}">${label}</button>`);
+      b.addEventListener("click", () => { seasonTab = k; render(); });
+      tabPills.appendChild(b);
+    });
+    view.appendChild(tabPills);
+    if (seasonTab === "tabla") { view.appendChild(statsTable(rows)); return; }
+    if (seasonTab === "equipo") { renderTeamStats(view); return; }
+
+    // Ranking
     const pillRow = el(`<div class="pill-toggle"></div>`);
     STAT_METRICS.forEach(m => {
       const b = el(`<button type="button" class="${seasonMetric === m.key ? "active" : ""}">${m.short}</button>`);
@@ -1960,11 +1971,62 @@
     // no, scrollLeft no tiene efecto porque el ancho aún vale 0).
     pillRow.addEventListener("scroll", () => { pillRowScrollLeft = pillRow.scrollLeft; });
     requestAnimationFrame(() => { pillRow.scrollLeft = pillRowScrollLeft; });
-
-    // Full stats table
-    view.appendChild(el(`<div class="section-title">Tabla completa</div>`));
-    view.appendChild(statsTable(rows));
   });
+
+  // Pestaña "Equipo": las estadísticas de toda la plantilla sumada, a nivel
+  // de equipo (medias por partido, balance y tiro).
+  function renderTeamStats(view) {
+    const partidos = DB.games.filter(g => (!seasonFinishedOnly || g.status === "final") && g.events.length);
+    const n = partidos.length;
+    if (!n) {
+      view.appendChild(el(`<p class="hint">Todavía no hay partidos con estadísticas.</p>`));
+      return;
+    }
+    const ts = aggregate(partidos.flatMap(g => g.events));
+    const conRival = partidos.filter(g => typeof g.oppScore === "number");
+    const nR = conRival.length;
+    const pf = conRival.reduce((a, g) => a + teamScore(g), 0);
+    const pc = conRival.reduce((a, g) => a + g.oppScore, 0);
+    const ganados = conRival.filter(g => teamScore(g) > g.oppScore).length;
+    const perdidos = conRival.filter(g => teamScore(g) < g.oppScore).length;
+
+    view.appendChild(el(`<div class="section-title">Balance</div>`));
+    view.appendChild(el(`
+      <div class="stat-tiles">
+        ${statTile(n, "PJ")}
+        ${statTile(nR ? `${ganados}-${perdidos}` : "—", "V - D")}
+        ${statTile(nR ? fmtAvg(pf / nR) : "—", "PUNTOS A FAVOR")}
+        ${statTile(nR ? fmtAvg(pc / nR) : "—", "PUNTOS EN CONTRA")}
+        ${statTile(nR ? fmtSigned(Math.round(((pf - pc) / nR) * 10) / 10) : "—", "+/- MEDIO")}
+        ${statTile(nR ? fmtSigned(pf - pc) : "—", "+/- TOTAL")}
+      </div>`));
+
+    view.appendChild(el(`<div class="section-title">Promedios por partido</div>`));
+    view.appendChild(el(`
+      <div class="stat-tiles">
+        ${statTile(fmtAvg(avg(ts.pts, n)), "PTS")}
+        ${statTile(fmtAvg(avg(ts.reb, n)), "REB")}
+        ${statTile(fmtAvg(avg(ts.ast, n)), "AST")}
+        ${statTile(fmtAvg(avg(ts.stl, n)), "ROB")}
+        ${statTile(fmtAvg(avg(ts.blk, n)), "TAP")}
+        ${statTile(fmtAvg(avg(ts.tov, n)), "PÉRD")}
+        ${statTile(fmtAvg(avg(ts.foul, n)), "FALTAS")}
+        ${statTile(fmtAvg(avg(ts.fouled, n)), "F. RECIB.")}
+        ${statTile(fmtAvg(avg(valoracion(ts), n)), "VAL")}
+      </div>`));
+
+    view.appendChild(el(`<div class="section-title">Tiro del equipo</div>`));
+    view.appendChild(el(`
+      <div class="card">
+        <div class="pct-line" style="margin-top:0">
+          <span>TC <b>${pctStr(ts.fgm, ts.fga)}</b> <small>${ts.fgm}/${ts.fga}</small></span>
+          <span>T2 <b>${pctStr(ts.p2m, ts.p2a)}</b> <small>${ts.p2m}/${ts.p2a}</small></span>
+          <span>T3 <b>${pctStr(ts.p3m, ts.p3a)}</b> <small>${ts.p3m}/${ts.p3a}</small></span>
+          <span>TL <b>${pctStr(ts.ftm, ts.fta)}</b> <small>${ts.ftm}/${ts.fta}</small></span>
+        </div>
+      </div>`));
+    view.appendChild(el(`<p class="hint" style="margin-top:10px">Suma de todos los jugadores en los ${n} partido${n === 1 ? "" : "s"} con estadísticas. Los puntos a favor y en contra y el +/- usan el marcador final de los partidos donde se anotó el rival.</p>`));
+  }
 
   function leaderboardChart(rows, metricKey) {
     const metric = STAT_METRICS.find(m => m.key === metricKey);
@@ -2001,37 +2063,6 @@
     const sorted = [...rows].sort((a, b) => b.s.pts - a.s.pts);
     const wrap = el(`<div class="table-wrap"></div>`);
 
-    // Fila "Equipo": cada columna a nivel de equipo (medias por partido del
-    // conjunto de jugadores; +/- = diferencia de puntos con el rival).
-    const partidosT = DB.games.filter(g => (!seasonFinishedOnly || g.status === "final") && g.events.length);
-    let teamRowHtml = "";
-    if (partidosT.length) {
-      const nT = partidosT.length;
-      const ts = aggregate(partidosT.flatMap(g => g.events));
-      const segundos = partidosT.reduce((a, g) => a + Object.values(g.min || {}).reduce((x, v) => x + (typeof v === "number" ? v : 0), 0), 0);
-      const conRival = partidosT.filter(g => typeof g.oppScore === "number");
-      const difTot = conRival.reduce((a, g) => a + (teamScore(g) - g.oppScore), 0);
-      const difAvg = conRival.length ? difTot / conRival.length : null;
-      teamRowHtml = `
-            <tr class="totals-row">
-              <td>Equipo</td>
-              <td>${nT}</td>
-              <td>${segundos ? fmtMinSec(Math.round(segundos / nT)) : "—"}</td>
-              <td>${fmtAvg(avg(ts.pts, nT))}</td>
-              <td>${fmtAvg(avg(ts.reb, nT))}</td>
-              <td>${fmtAvg(avg(ts.ast, nT))}</td>
-              <td>${fmtAvg(avg(ts.stl, nT))}</td>
-              <td>${fmtAvg(avg(ts.blk, nT))}</td>
-              <td>${fmtAvg(avg(ts.tov, nT))}</td>
-              <td>${fmtAvg(avg(valoracion(ts), nT))}</td>
-              <td>${difAvg === null ? "—" : fmtSigned(Math.round(difAvg * 10) / 10)}</td>
-              <td>${conRival.length ? fmtSigned(difTot) : "—"}</td>
-              <td class="pct">${shootCell(ts.fgm, ts.fga)}</td>
-              <td class="pct">${shootCell(ts.p2m, ts.p2a)}</td>
-              <td class="pct">${shootCell(ts.p3m, ts.p3a)}</td>
-              <td class="pct">${shootCell(ts.ftm, ts.fta)}</td>
-            </tr>`;
-    }
     const table = el(`
       <table class="stats-table">
         <thead>
@@ -2063,7 +2094,6 @@
               <td class="pct">${shootCell(r.s.ftm, r.s.fta)}</td>
             </tr>
           `; }).join("")}
-          ${teamRowHtml}
         </tbody>
       </table>
     `);
