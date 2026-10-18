@@ -2,12 +2,18 @@ name: Calendario y clasificación
 
 on:
   schedule:
-    # Viernes y domingo, dos veces cada día (14:00 y 15:00 UTC, que cubre
-    # las 16:00 de Madrid tanto en horario de verano como de invierno).
-    # No hay guarda de hora: GitHub retrasa los cron programados varias
-    # horas y una guarda así descartaba la ejecución. Correr dos veces es
-    # inocuo: la segunda no encuentra cambios y no commitea nada.
-    - cron: "0 14,15 * * 5,0"
+    # Cron va en UTC; Madrid es UTC+2 en verano y UTC+1 en invierno, así que
+    # cada hora se programa en los dos horarios (algunas ejecuciones caen
+    # una hora antes o después de lo pedido, según la época). No hay guarda
+    # de hora: GitHub retrasa los cron varias horas y una guarda así
+    # descartaba la ejecución. Correr de más es inocuo: si no hay cambios
+    # no se commitea nada.
+    # Viernes: ~16:00 Madrid.
+    - cron: "0 14,15 * * 5"
+    # Domingos, hora Madrid: 10:20, 11:35, 13:05, 14:05 y 15:20.
+    - cron: "20 8,9,13,14 * * 0"   # 10:20 y 15:20
+    - cron: "35 9,10 * * 0"        # 11:35
+    - cron: "5 11,12,13 * * 0"     # 13:05 y 14:05
   workflow_dispatch:       # también se puede lanzar a mano desde la pestaña Actions
 
 permissions:
