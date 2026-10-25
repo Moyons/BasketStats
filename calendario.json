@@ -1,30 +1,40 @@
 {
-  "actualizado": "2026-10-23T18:13:15.590Z",
+  "actualizado": "2026-10-25T13:14:19.857Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
   "clasificacion": [
     {
       "puesto": 1,
       "nombre": "MDA",
-      "pj": 2,
-      "pg": 2,
+      "pj": 3,
+      "pg": 3,
       "pp": 0,
-      "pf": 136,
-      "pc": 31,
-      "puntos": 4
+      "pf": 192,
+      "pc": 69,
+      "puntos": 6
     },
     {
       "puesto": 2,
-      "nombre": "CHAVALITROS",
-      "pj": 2,
+      "nombre": "CHUPITIMANGUIS",
+      "pj": 3,
       "pg": 2,
-      "pp": 0,
-      "pf": 100,
-      "pc": 27,
-      "puntos": 4
+      "pp": 1,
+      "pf": 178,
+      "pc": 99,
+      "puntos": 5
     },
     {
       "puesto": 3,
+      "nombre": "CHAVALITROS",
+      "pj": 3,
+      "pg": 2,
+      "pp": 1,
+      "pf": 129,
+      "pc": 63,
+      "puntos": 5
+    },
+    {
+      "puesto": 4,
       "nombre": "TROPICALEROS",
       "pj": 2,
       "pg": 2,
@@ -34,7 +44,7 @@
       "puntos": 4
     },
     {
-      "puesto": 4,
+      "puesto": 5,
       "nombre": "NABUCO TD",
       "pj": 2,
       "pg": 2,
@@ -44,17 +54,27 @@
       "puntos": 4
     },
     {
-      "puesto": 5,
-      "nombre": "CHUPITIMANGUIS",
+      "puesto": 6,
+      "nombre": "VALLEKAS BASKET",
+      "pj": 3,
+      "pg": 1,
+      "pp": 2,
+      "pf": 88,
+      "pc": 160,
+      "puntos": 4
+    },
+    {
+      "puesto": 7,
+      "nombre": "RIF",
       "pj": 2,
       "pg": 1,
       "pp": 1,
-      "pf": 115,
-      "pc": 78,
+      "pf": 80,
+      "pc": 84,
       "puntos": 3
     },
     {
-      "puesto": 6,
+      "puesto": 8,
       "nombre": "LITROS DE MAHOU",
       "pj": 2,
       "pg": 1,
@@ -64,54 +84,34 @@
       "puntos": 3
     },
     {
-      "puesto": 7,
-      "nombre": "WILD BOYS",
-      "pj": 2,
-      "pg": 0,
-      "pp": 2,
-      "pf": 34,
-      "pc": 103,
-      "puntos": 2
-    },
-    {
-      "puesto": 8,
-      "nombre": "ENFERMOS DEL ARO",
-      "pj": 2,
-      "pg": 0,
-      "pp": 2,
-      "pf": 39,
-      "pc": 120,
-      "puntos": 2
-    },
-    {
       "puesto": 9,
-      "nombre": "VALLEKAS BASKET",
-      "pj": 2,
+      "nombre": "ENFERMOS DEL ARO",
+      "pj": 3,
       "pg": 0,
-      "pp": 2,
-      "pf": 45,
-      "pc": 133,
-      "puntos": 2
+      "pp": 3,
+      "pf": 66,
+      "pc": 163,
+      "puntos": 3
     },
     {
       "puesto": 10,
-      "nombre": "LOS KHINKIS RUSOS",
-      "pj": 1,
+      "nombre": "WILD BOYS",
+      "pj": 3,
       "pg": 0,
-      "pp": 1,
-      "pf": 44,
-      "pc": 49,
-      "puntos": 1
+      "pp": 3,
+      "pf": 55,
+      "pc": 166,
+      "puntos": 3
     },
     {
       "puesto": 11,
-      "nombre": "RIF",
-      "pj": 1,
+      "nombre": "LOS KHINKIS RUSOS",
+      "pj": 2,
       "pg": 0,
-      "pp": 1,
-      "pf": 44,
-      "pc": 55,
-      "puntos": 1
+      "pp": 2,
+      "pf": 82,
+      "pc": 105,
+      "puntos": 2
     }
   ],
   "partidos": [
@@ -149,10 +149,10 @@
       "visitante": "RIF",
       "esLocal": true,
       "rival": "RIF",
-      "puntosLocal": null,
-      "puntosVisitante": null,
+      "puntosLocal": 29,
+      "puntosVisitante": 36,
       "campo": "MORATALAZ P2c/ VALDEBERNARDO, 2 28030, Madrid",
-      "jugado": false
+      "jugado": true
     },
     {
       "jornada": "Jornada 4",
@@ -472,36 +472,36 @@
       "fecha": "2026-10-25T09:00",
       "local": "LOS KHINKIS RUSOS",
       "visitante": "MDA",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 38,
+      "puntosVisitante": 56,
+      "jugado": true
     },
     {
       "jornada": "Jornada 3",
       "fecha": "2026-10-25T10:15",
       "local": "CHAVALITROS",
       "visitante": "RIF",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 29,
+      "puntosVisitante": 36,
+      "jugado": true
     },
     {
       "jornada": "Jornada 3",
       "fecha": "2026-10-25T11:30",
       "local": "CHUPITIMANGUIS",
       "visitante": "WILD BOYS",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 63,
+      "puntosVisitante": 21,
+      "jugado": true
     },
     {
       "jornada": "Jornada 3",
       "fecha": "2026-10-25T12:45",
       "local": "ENFERMOS DEL ARO",
       "visitante": "VALLEKAS BASKET",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 27,
+      "puntosVisitante": 43,
+      "jugado": true
     },
     {
       "jornada": "Jornada 3",
