@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-10-25T13:54:15.985Z",
+  "actualizado": "2026-10-25T14:53:18.951Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
   "clasificacion": [
@@ -15,6 +15,16 @@
     },
     {
       "puesto": 2,
+      "nombre": "NABUCO TD",
+      "pj": 3,
+      "pg": 3,
+      "pp": 0,
+      "pf": 181,
+      "pc": 96,
+      "puntos": 6
+    },
+    {
+      "puesto": 3,
       "nombre": "CHUPITIMANGUIS",
       "pj": 3,
       "pg": 2,
@@ -24,7 +34,7 @@
       "puntos": 5
     },
     {
-      "puesto": 3,
+      "puesto": 4,
       "nombre": "CHAVALITROS",
       "pj": 3,
       "pg": 2,
@@ -34,23 +44,13 @@
       "puntos": 5
     },
     {
-      "puesto": 4,
+      "puesto": 5,
       "nombre": "TROPICALEROS",
       "pj": 2,
       "pg": 2,
       "pp": 0,
       "pf": 114,
       "pc": 67,
-      "puntos": 4
-    },
-    {
-      "puesto": 5,
-      "nombre": "NABUCO TD",
-      "pj": 2,
-      "pg": 2,
-      "pp": 0,
-      "pf": 107,
-      "pc": 63,
       "puntos": 4
     },
     {
@@ -65,22 +65,22 @@
     },
     {
       "puesto": 7,
+      "nombre": "LITROS DE MAHOU",
+      "pj": 3,
+      "pg": 1,
+      "pp": 2,
+      "pf": 99,
+      "pc": 192,
+      "puntos": 4
+    },
+    {
+      "puesto": 8,
       "nombre": "RIF",
       "pj": 2,
       "pg": 1,
       "pp": 1,
       "pf": 80,
       "pc": 84,
-      "puntos": 3
-    },
-    {
-      "puesto": 8,
-      "nombre": "LITROS DE MAHOU",
-      "pj": 2,
-      "pg": 1,
-      "pp": 1,
-      "pf": 66,
-      "pc": 118,
       "puntos": 3
     },
     {
@@ -508,9 +508,9 @@
       "fecha": "2026-10-25T14:00",
       "local": "LITROS DE MAHOU",
       "visitante": "NABUCO TD",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 33,
+      "puntosVisitante": 74,
+      "jugado": true
     },
     {
       "jornada": "Jornada 4",
