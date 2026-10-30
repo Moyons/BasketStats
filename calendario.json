@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-10-25T17:04:48.961Z",
+  "actualizado": "2026-10-30T18:57:13.705Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
   "clasificacion": [
@@ -378,6 +378,15 @@
   ],
   "partidosGrupo": [
     {
+      "jornada": "Jornada 4",
+      "fecha": null,
+      "local": "RIF",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
       "jornada": "Jornada 1",
       "fecha": "2026-10-04T09:00",
       "local": "LITROS DE MAHOU",
@@ -544,15 +553,6 @@
       "fecha": "2026-11-08T12:45",
       "local": "WILD BOYS",
       "visitante": "ENFERMOS DEL ARO",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
-    },
-    {
-      "jornada": "Jornada 4",
-      "fecha": "2026-11-08T14:00",
-      "local": "RIF",
-      "visitante": "CHUPITIMANGUIS",
       "puntosLocal": null,
       "puntosVisitante": null,
       "jugado": false
