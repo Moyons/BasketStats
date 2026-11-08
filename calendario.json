@@ -1,10 +1,30 @@
 {
-  "actualizado": "2026-11-06T20:13:24.320Z",
+  "actualizado": "2026-11-08T15:19:54.680Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
   "clasificacion": [
     {
       "puesto": 1,
+      "nombre": "NABUCO TD",
+      "pj": 4,
+      "pg": 4,
+      "pp": 0,
+      "pf": 226,
+      "pc": 134,
+      "puntos": 8
+    },
+    {
+      "puesto": 2,
+      "nombre": "CHAVALITROS",
+      "pj": 4,
+      "pg": 3,
+      "pp": 1,
+      "pf": 160,
+      "pc": 90,
+      "puntos": 7
+    },
+    {
+      "puesto": 3,
       "nombre": "MDA",
       "pj": 3,
       "pg": 3,
@@ -14,17 +34,17 @@
       "puntos": 6
     },
     {
-      "puesto": 2,
-      "nombre": "NABUCO TD",
-      "pj": 3,
-      "pg": 3,
-      "pp": 0,
-      "pf": 181,
-      "pc": 96,
+      "puesto": 4,
+      "nombre": "VALLEKAS BASKET",
+      "pj": 4,
+      "pg": 2,
+      "pp": 2,
+      "pf": 132,
+      "pc": 199,
       "puntos": 6
     },
     {
-      "puesto": 3,
+      "puesto": 5,
       "nombre": "CHUPITIMANGUIS",
       "pj": 3,
       "pg": 2,
@@ -34,47 +54,47 @@
       "puntos": 5
     },
     {
-      "puesto": 4,
-      "nombre": "CHAVALITROS",
+      "puesto": 6,
+      "nombre": "TROPICALEROS",
       "pj": 3,
       "pg": 2,
       "pp": 1,
-      "pf": 129,
-      "pc": 63,
+      "pf": 141,
+      "pc": 98,
       "puntos": 5
-    },
-    {
-      "puesto": 5,
-      "nombre": "TROPICALEROS",
-      "pj": 2,
-      "pg": 2,
-      "pp": 0,
-      "pf": 114,
-      "pc": 67,
-      "puntos": 4
-    },
-    {
-      "puesto": 6,
-      "nombre": "VALLEKAS BASKET",
-      "pj": 3,
-      "pg": 1,
-      "pp": 2,
-      "pf": 88,
-      "pc": 160,
-      "puntos": 4
     },
     {
       "puesto": 7,
       "nombre": "LITROS DE MAHOU",
-      "pj": 3,
+      "pj": 4,
       "pg": 1,
-      "pp": 2,
-      "pf": 99,
-      "pc": 192,
-      "puntos": 4
+      "pp": 3,
+      "pf": 138,
+      "pc": 236,
+      "puntos": 5
     },
     {
       "puesto": 8,
+      "nombre": "WILD BOYS",
+      "pj": 4,
+      "pg": 1,
+      "pp": 3,
+      "pf": 87,
+      "pc": 193,
+      "puntos": 5
+    },
+    {
+      "puesto": 9,
+      "nombre": "ENFERMOS DEL ARO",
+      "pj": 4,
+      "pg": 0,
+      "pp": 4,
+      "pf": 93,
+      "pc": 195,
+      "puntos": 4
+    },
+    {
+      "puesto": 10,
       "nombre": "RIF",
       "pj": 2,
       "pg": 1,
@@ -84,34 +104,14 @@
       "puntos": 3
     },
     {
-      "puesto": 9,
-      "nombre": "ENFERMOS DEL ARO",
-      "pj": 3,
-      "pg": 0,
-      "pp": 3,
-      "pf": 66,
-      "pc": 163,
-      "puntos": 3
-    },
-    {
-      "puesto": 10,
-      "nombre": "WILD BOYS",
-      "pj": 3,
-      "pg": 0,
-      "pp": 3,
-      "pf": 55,
-      "pc": 166,
-      "puntos": 3
-    },
-    {
       "puesto": 11,
       "nombre": "LOS KHINKIS RUSOS",
-      "pj": 2,
+      "pj": 3,
       "pg": 0,
-      "pp": 2,
-      "pf": 82,
-      "pc": 105,
-      "puntos": 2
+      "pp": 3,
+      "pf": 120,
+      "pc": 150,
+      "puntos": 3
     }
   ],
   "partidos": [
@@ -162,10 +162,10 @@
       "visitante": "CHAVALITROS",
       "esLocal": false,
       "rival": "TROPICALEROS",
-      "puntosLocal": null,
-      "puntosVisitante": null,
+      "puntosLocal": 27,
+      "puntosVisitante": 31,
       "campo": "MORATALAZ P1c/ VALDEBERNARDO, 2 28030, Madrid",
-      "jugado": false
+      "jugado": true
     },
     {
       "jornada": "Jornada 6",
@@ -526,36 +526,36 @@
       "fecha": "2026-11-08T09:00",
       "local": "TROPICALEROS",
       "visitante": "CHAVALITROS",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 27,
+      "puntosVisitante": 31,
+      "jugado": true
     },
     {
       "jornada": "Jornada 4",
       "fecha": "2026-11-08T10:15",
       "local": "NABUCO TD",
       "visitante": "LOS KHINKIS RUSOS",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 45,
+      "puntosVisitante": 38,
+      "jugado": true
     },
     {
       "jornada": "Jornada 4",
       "fecha": "2026-11-08T11:30",
       "local": "VALLEKAS BASKET",
       "visitante": "LITROS DE MAHOU",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 44,
+      "puntosVisitante": 39,
+      "jugado": true
     },
     {
       "jornada": "Jornada 4",
       "fecha": "2026-11-08T12:45",
       "local": "WILD BOYS",
       "visitante": "ENFERMOS DEL ARO",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
+      "puntosLocal": 32,
+      "puntosVisitante": 27,
+      "jugado": true
     },
     {
       "jornada": "Jornada 5",
