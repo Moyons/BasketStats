@@ -1067,7 +1067,7 @@
     fila.addEventListener("scroll", () => { ligaJornadaScroll = fila.scrollLeft; });
     cuerpo.appendChild(fila);
     requestAnimationFrame(() => {
-      if (ligaJornadaScroll === null) { const a = fila.querySelector("button.active"); fila.scrollLeft = a.offsetLeft - (fila.clientWidth - a.offsetWidth) / 2; }
+      if (ligaJornadaScroll === null) { const a = fila.querySelector("button.active"); const fr = fila.getBoundingClientRect(), ar = a.getBoundingClientRect(); fila.scrollLeft += (ar.left - fr.left) - (fr.width - ar.width) / 2; }
       else fila.scrollLeft = ligaJornadaScroll;
     });
 
