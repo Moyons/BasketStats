@@ -1018,19 +1018,21 @@
     }
 
     const rows = todos.filter(j => j.equipo === ligaJugEquipo);
+    // De nuestro equipo solo se guardan minutos y +/- (el resto ya está en Estadísticas)
+    const nuestro = ligaJugEquipo === (c.equipo || "").toUpperCase();
     const wrap = el(`
       <div class="table-wrap"><table class="stats-table players">
-        <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th><th>PTS</th><th>PTS TOT</th><th>T2</th><th>T3</th><th>TL</th><th>+/-</th><th>+/- TOT</th></tr></thead>
+        <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th>${nuestro ? "" : "<th>PTS</th><th>PTS TOT</th><th>T2</th><th>T3</th><th>TL</th>"}<th>+/-</th><th>+/- TOT</th></tr></thead>
         <tbody>${rows.map(j => `
           <tr>
             <td data-sort="${esc(titulo(j.nombre))}"><span class="pl-n">${esc(j.dorsal)}</span><span class="pl-name">${esc(nombreCorto(j.nombre))}</span></td>
             <td>${j.pj}</td>
             <td>${j.minAvg === null ? "—" : fmtMinSec(Math.round(j.minAvg))}</td>
-            <td>${j.pj ? fmtAvg(j.pts / j.pj) : "—"}</td>
+            ${nuestro ? "" : `<td>${j.pj ? fmtAvg(j.pts / j.pj) : "—"}</td>
             <td>${j.pts}</td>
             <td>${j.t2}</td>
             <td>${j.t3}</td>
-            <td class="pct">${shootCell(j.tlm, j.tla)}</td>
+            <td class="pct">${shootCell(j.tlm, j.tla)}</td>`}
             <td>${j.pj ? fmtSigned(Math.round((j.pm / j.pj) * 10) / 10) : "—"}</td>
             <td>${j.pj ? fmtSigned(j.pm) : "—"}</td>
           </tr>`).join("")}
@@ -1045,12 +1047,14 @@
     const todos = c.partidosGrupo || [];
     const jornadas = [];
     todos.forEach(p => { if (!jornadas.includes(p.jornada)) jornadas.push(p.jornada); });
+    const numJ = (j) => { const m = /(\d+)/.exec(j); return m ? +m[1] : 0; };
+    jornadas.sort((a, b) => numJ(a) - numJ(b));
     if (!jornadas.length) {
       cuerpo.appendChild(el(`<p class="hint">Todavía no hay jornadas.</p>`));
       return;
     }
     if (!ligaJornada || !jornadas.includes(ligaJornada)) {
-      const pendiente = todos.find(p => !p.jugado);
+      const pendiente = todos.filter(p => !p.jugado).sort((a, b) => numJ(a.jornada) - numJ(b.jornada))[0];
       ligaJornada = pendiente ? pendiente.jornada : jornadas[jornadas.length - 1];
     }
     const etiqueta = (j) => { const m = /(\d+)/.exec(j); return m ? "J" + m[1] : j; };
@@ -1063,7 +1067,7 @@
     fila.addEventListener("scroll", () => { ligaJornadaScroll = fila.scrollLeft; });
     cuerpo.appendChild(fila);
     requestAnimationFrame(() => {
-      if (ligaJornadaScroll === null) fila.querySelector("button.active").scrollIntoView({ inline: "center", block: "nearest" });
+      if (ligaJornadaScroll === null) { const a = fila.querySelector("button.active"); fila.scrollLeft = a.offsetLeft - (fila.clientWidth - a.offsetWidth) / 2; }
       else fila.scrollLeft = ligaJornadaScroll;
     });
 
