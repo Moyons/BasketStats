@@ -1017,7 +1017,20 @@
         </div>`));
     }
 
-    const rows = todos.filter(j => j.equipo === ligaJugEquipo);
+    let rows = todos.filter(j => j.equipo === ligaJugEquipo);
+    // Nuestro equipo: las estadísticas salen de lo que se ha apuntado en la app
+    // (igual que en Estadísticas), no de los PDF de la FBM.
+    const esNuestro = ligaJugEquipo === (c.equipo || "").toUpperCase();
+    if (esNuestro) {
+      rows = activePlayers().map(p => {
+        const gp = gamesPlayedBy(p.id, {});
+        if (!gp) return null;
+        const st = aggregate(allPlayerEvents(p.id, {}));
+        const pm = seasonPMStats(p.id, {});
+        const mn = seasonMinAvg(p.id, {});
+        return { nombre: p.name, dorsal: p.number ?? "", pj: gp, minAvg: mn, pts: st.pts, t2: st.p2m, t3: st.p3m, tlm: st.ftm, tla: st.fta, pm: pm.total, pmAvg: pm.avg, ptsAvg: st.pts / gp };
+      }).filter(Boolean).sort((x, y) => y.pts - x.pts);
+    }
     const wrap = el(`
       <div class="table-wrap"><table class="stats-table players">
         <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th><th>PTS</th><th>PTS TOT</th><th>T2</th><th>T3</th><th>TL</th><th>+/-</th><th>+/- TOT</th></tr></thead>
@@ -1031,7 +1044,7 @@
             <td>${j.t2}</td>
             <td>${j.t3}</td>
             <td class="pct">${shootCell(j.tlm, j.tla)}</td>
-            <td>${j.pj ? fmtSigned(Math.round((j.pm / j.pj) * 10) / 10) : "—"}</td>
+            <td>${j.pmAvg !== undefined ? (j.pmAvg === null ? "—" : fmtSigned(Math.round(j.pmAvg * 10) / 10)) : j.pj ? fmtSigned(Math.round((j.pm / j.pj) * 10) / 10) : "—"}</td>
             <td>${j.pj ? fmtSigned(j.pm) : "—"}</td>
           </tr>`).join("")}
         </tbody></table></div>`);
