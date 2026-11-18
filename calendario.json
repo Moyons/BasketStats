@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-15T19:24:11.323Z",
+  "actualizado": "2026-11-18T18:58:36.185Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
   "clasificacion": [
@@ -378,24 +378,6 @@
   ],
   "partidosGrupo": [
     {
-      "jornada": "Jornada 4",
-      "fecha": null,
-      "local": "RIF",
-      "visitante": "CHUPITIMANGUIS",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
-    },
-    {
-      "jornada": "Jornada 5",
-      "fecha": null,
-      "local": "MDA",
-      "visitante": "NABUCO TD",
-      "puntosLocal": null,
-      "puntosVisitante": null,
-      "jugado": false
-    },
-    {
       "jornada": "Jornada 1",
       "fecha": "2026-10-04T09:00",
       "local": "LITROS DE MAHOU",
@@ -601,6 +583,15 @@
       "puntosLocal": 55,
       "puntosVisitante": 33,
       "jugado": true
+    },
+    {
+      "jornada": "Jornada 4",
+      "fecha": "2026-11-21T15:45",
+      "local": "RIF",
+      "visitante": "CHUPITIMANGUIS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
     },
     {
       "jornada": "Jornada 6",
@@ -1363,6 +1354,15 @@
       "fecha": "2027-12-10T12:45",
       "local": "MDA",
       "visitante": "TROPICALEROS",
+      "puntosLocal": null,
+      "puntosVisitante": null,
+      "jugado": false
+    },
+    {
+      "jornada": "Jornada 5",
+      "fecha": "2027-12-20T13:30",
+      "local": "MDA",
+      "visitante": "NABUCO TD",
       "puntosLocal": null,
       "puntosVisitante": null,
       "jugado": false

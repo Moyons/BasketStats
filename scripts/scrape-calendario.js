@@ -23,16 +23,27 @@ function fechaISO(txt) {
   return m ? `${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}` : null;
 }
 
+// La web (WebForms) recarga la página al cambiar cada filtro; si la lectura
+// coincide con una navegación, se espera a que termine y se repite.
+async function reintentar(fn, intentos = 5) {
+  for (let i = 1; ; i++) {
+    try { return await fn(); } catch (e) {
+      if (i >= intentos || !/Execution context was destroyed|navigation/i.test(String(e))) throw e;
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+}
+
 async function scrapeGrupo() {
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
     await page.goto(URL, { waitUntil: "load", timeout: 90000 });
     for (const [name, texto] of FILTROS) {
-      const valor = await page.$$eval(`#${P}${name} option`, (os, t) => {
+      const valor = await reintentar(() => page.$$eval(`#${P}${name} option`, (os, t) => {
         const o = os.find(x => x.textContent.trim().toLowerCase().includes(t.toLowerCase()));
         return o ? o.value : null;
-      }, texto);
+      }, texto));
       if (!valor) throw new Error(`Filtro no encontrado: ${texto} (${name})`);
       await Promise.all([
         page.waitForLoadState("load").catch(() => {}),
