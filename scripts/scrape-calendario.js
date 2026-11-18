@@ -108,7 +108,17 @@ async function scrapeGrupo() {
 }
 
 (async () => {
-  const { partidos: todos, clasificacion } = await scrapeGrupo();
+  // La web falla a ratos (recargas a mitad de lectura, desplegables aún
+  // vacíos): se repite toda la extracción hasta 4 veces antes de dar error.
+  let res;
+  for (let i = 1; ; i++) {
+    try { res = await scrapeGrupo(); break; } catch (e) {
+      if (i >= 4) throw e;
+      console.warn(`Intento ${i} fallido (${String(e.message).split("\n")[0]}); reintentando…`);
+      await new Promise(r => setTimeout(r, 5000 * i));
+    }
+  }
+  const { partidos: todos, clasificacion } = res;
   const equipo = todos.filter(p => p.local.toUpperCase() === EQUIPO || p.visitante.toUpperCase() === EQUIPO);
   if (equipo.length === 0) throw new Error("No se encontró ningún partido de " + EQUIPO + " (¿ha cambiado la web?)");
 
