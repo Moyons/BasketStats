@@ -1018,21 +1018,19 @@
     }
 
     const rows = todos.filter(j => j.equipo === ligaJugEquipo);
-    // De nuestro equipo solo se guardan minutos y +/- (el resto ya está en Estadísticas)
-    const nuestro = ligaJugEquipo === (c.equipo || "").toUpperCase();
     const wrap = el(`
       <div class="table-wrap"><table class="stats-table players">
-        <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th>${nuestro ? "" : "<th>PTS</th><th>PTS TOT</th><th>T2</th><th>T3</th><th>TL</th>"}<th>+/-</th><th>+/- TOT</th></tr></thead>
+        <thead><tr><th>Jugador</th><th>PJ</th><th>MIN</th><th>PTS</th><th>PTS TOT</th><th>T2</th><th>T3</th><th>TL</th><th>+/-</th><th>+/- TOT</th></tr></thead>
         <tbody>${rows.map(j => `
           <tr>
             <td data-sort="${esc(titulo(j.nombre))}"><span class="pl-n">${esc(j.dorsal)}</span><span class="pl-name">${esc(nombreCorto(j.nombre))}</span></td>
             <td>${j.pj}</td>
             <td>${j.minAvg === null ? "—" : fmtMinSec(Math.round(j.minAvg))}</td>
-            ${nuestro ? "" : `<td>${j.pj ? fmtAvg(j.pts / j.pj) : "—"}</td>
+            <td>${j.pj ? fmtAvg(j.pts / j.pj) : "—"}</td>
             <td>${j.pts}</td>
             <td>${j.t2}</td>
             <td>${j.t3}</td>
-            <td class="pct">${shootCell(j.tlm, j.tla)}</td>`}
+            <td class="pct">${shootCell(j.tlm, j.tla)}</td>
             <td>${j.pj ? fmtSigned(Math.round((j.pm / j.pj) * 10) / 10) : "—"}</td>
             <td>${j.pj ? fmtSigned(j.pm) : "—"}</td>
           </tr>`).join("")}
