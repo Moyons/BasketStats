@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-22T20:22:49.321Z",
+  "actualizado": "2026-11-27T22:27:38.582Z",
   "equipo": "CHAVALITROS",
   "fuente": "https://www.fbm.es/es/horarios-y-resultados",
   "clasificacion": [
@@ -10,11 +10,21 @@
       "pg": 4,
       "pp": 2,
       "pf": 279,
-      "pc": 180,
+      "pc": 200,
       "puntos": 10
     },
     {
       "puesto": 2,
+      "nombre": "RIF",
+      "pj": 5,
+      "pg": 4,
+      "pp": 1,
+      "pf": 221,
+      "pc": 150,
+      "puntos": 9
+    },
+    {
+      "puesto": 3,
       "nombre": "MDA",
       "pj": 4,
       "pg": 4,
@@ -24,7 +34,7 @@
       "puntos": 8
     },
     {
-      "puesto": 3,
+      "puesto": 4,
       "nombre": "NABUCO TD",
       "pj": 4,
       "pg": 4,
@@ -34,23 +44,13 @@
       "puntos": 8
     },
     {
-      "puesto": 4,
+      "puesto": 5,
       "nombre": "CHAVALITROS",
       "pj": 5,
       "pg": 3,
       "pp": 2,
       "pf": 206,
       "pc": 137,
-      "puntos": 8
-    },
-    {
-      "puesto": 5,
-      "nombre": "RIF",
-      "pj": 5,
-      "pg": 3,
-      "pp": 2,
-      "pf": 201,
-      "pc": 150,
       "puntos": 8
     },
     {
@@ -589,7 +589,7 @@
       "fecha": "2026-11-21T15:45",
       "local": "RIF",
       "visitante": "CHUPITIMANGUIS",
-      "puntosLocal": 0,
+      "puntosLocal": 20,
       "puntosVisitante": 0,
       "jugado": true
     },
